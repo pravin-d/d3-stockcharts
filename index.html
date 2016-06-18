@@ -14,6 +14,29 @@
 
   <script>
 
+  // Traduction en français des dates
+
+  var fr = d3.locale({
+            "decimal": ",",
+            "thousands": " ",
+            "grouping": [3],
+            "currency": ["", " €"],
+            "dateTime": "%A %e %B %Y",
+            "date": "%d/%m/%Y",
+            "time": "%H h %M",
+            "periods": ["AM", "PM"],
+            "days": ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"],
+            "shortDays": ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."],
+            "months": ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"],
+            "shortMonths": ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juill.", "août", "sept.", "oct.", "nov.", "déc."] })
+
+  var format = fr.timeFormat.multi([
+          ["%a %d", function(d) { return d.getDay() && d.getDate() != 1; }],
+          ["%d %b", function(d) { return d.getDate() != 1; }],
+          ["%B", function(d) { return d.getMonth(); }],
+          ["%Y", function() { return true; }]
+        ]);
+
   var margin = {top: 10, right: 10, bottom: 100, left: 40},
       margin2 = {top: 430, right: 10, bottom: 20, left: 40},
       width = 960 - margin.left - margin.right,
@@ -25,7 +48,7 @@
       y = d3.scale.linear().range([height, 0]),
       y2 = d3.scale.linear().range([height2, 0]);
 
-  var xAxis = d3.svg.axis().scale(x).orient("bottom"),
+  var xAxis = d3.svg.axis().scale(x).orient("bottom").tickFormat(format),
       xAxis2 = d3.svg.axis().scale(x2).orient("bottom"),
       yAxis = d3.svg.axis().scale(y).orient("left");
 
@@ -63,7 +86,7 @@
       .attr("class", "context")
       .attr("transform", "translate(" + margin2.left + "," + margin2.top + ")");
 
-  d3.json('json/assets/FR0007054358.json', function(err, data) {
+  d3.json('json/assets/US0378331005.json', function(err, data) {
     var d = []
     for (i in data) {
       d.push({
