@@ -1,23 +1,23 @@
 body {
       font-family: PT Sans, sans-serif;
-      width: 960px;
+      width: 800px;
       margin: 3em auto 1em;
     }
 
     h1 {
       font-size: 1.75em;
-      margin-bottom: 3em;
+      margin-bottom: 1em;
       text-align: center;
       color: #999;
     }
 
     svg {
-      font: 10px sans-serif;
+      font-size: 0.75em;
     }
 
-    .area {
+    .area, .line {
       fill: steelblue;
-      clip-path: url(index.html#clip);
+      clip-path: url(../index.html#clip);
     }
 
     .axis path,
@@ -25,6 +25,12 @@ body {
       fill: none;
       stroke: #000;
       shape-rendering: crispEdges;
+    }
+
+    .line {
+      fill: none;
+      stroke: steelblue;
+      stroke-width: 1.5px;
     }
 
     .brush .extent {

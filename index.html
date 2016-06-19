@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <title>Stocks</title>
-  <link href="styles.css" rel="stylesheet" />
-  <script src="https://d3js.org/d3.v3.min.js"></script>
+  <link href="assets/styles.css" rel="stylesheet" />
+  <script src="assets/d3.js"></script>
 
 </head>
 
@@ -39,7 +39,7 @@
 
   var margin = {top: 10, right: 10, bottom: 100, left: 40},
       margin2 = {top: 430, right: 10, bottom: 20, left: 40},
-      width = 960 - margin.left - margin.right,
+      width = 800 - margin.left - margin.right,
       height = 500 - margin.top - margin.bottom,
       height2 = 500 - margin2.top - margin2.bottom;
 
@@ -56,11 +56,10 @@
       .x(x2)
       .on("brush", brushed);
 
-  var area = d3.svg.area()
-      .interpolate("monotone")
+  var area = d3.svg.line()
+      .interpolate("basis")
       .x(function(d) { return x(d.date); })
-      .y0(height)
-      .y1(function(d) { return y(d.price); });
+      .y(function(d) { return y(d.price); });
 
   var area2 = d3.svg.area()
       .interpolate("monotone")
@@ -74,7 +73,7 @@
 
   svg.append("defs").append("clipPath")
       .attr("id", "clip")
-    .append("rect")
+      .append("rect")
       .attr("width", width)
       .attr("height", height);
 
@@ -86,7 +85,7 @@
       .attr("class", "context")
       .attr("transform", "translate(" + margin2.left + "," + margin2.top + ")");
 
-  d3.json('json/assets/US0378331005.json', function(err, data) {
+  d3.json('json/assets/FR0000077919.json', function(err, data) {
     var d = []
     for (i in data) {
       d.push({
@@ -103,7 +102,7 @@
 
     focus.append("path")
         .datum(data)
-        .attr("class", "area")
+        .attr("class", "line")
         .attr("d", area);
 
     focus.append("g")
@@ -136,6 +135,7 @@
   function brushed() {
     x.domain(brush.empty() ? x2.domain() : brush.extent());
     focus.select(".area").attr("d", area);
+    focus.select(".line").attr("d", area);
     focus.select(".x.axis").call(xAxis);
   }
 
