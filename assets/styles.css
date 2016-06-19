@@ -1,40 +1,54 @@
 body {
-      font-family: PT Sans, sans-serif;
-      width: 800px;
-      margin: 3em auto 1em;
-    }
+  font-family: PT Sans, sans-serif;
+  width: 800px;
+  margin: 3em auto 1em;
+}
 
-    h1 {
-      font-size: 1.75em;
-      margin-bottom: 1em;
-      text-align: center;
-      color: #999;
-    }
+h1 {
+  font-size: 1.75em;
+  margin-bottom: 1em;
+  text-align: center;
+  color: #999;
+}
 
-    svg {
-      font-size: 0.75em;
-    }
+svg {
+  font-size: 0.75em;
+}
 
-    .area, .line {
-      fill: steelblue;
-      clip-path: url(../index.html#clip);
-    }
+.area, .line {
+  fill: steelblue;
+  fill-opacity: 0.2;
+  stroke: steelblue;
+  stroke-opacity: 0.5;
+  clip-path: url(../index.html#clip);
+}
 
-    .axis path,
-    .axis line {
-      fill: none;
-      stroke: #000;
-      shape-rendering: crispEdges;
-    }
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #777;
+}
 
-    .line {
-      fill: none;
-      stroke: steelblue;
-      stroke-width: 1.5px;
-    }
+.line {
+  fill: none;
+  stroke-width: 1.5px;
+  stroke-opacity: 0.7;
+}
 
-    .brush .extent {
-      stroke: #fff;
-      fill-opacity: .125;
-      shape-rendering: crispEdges;
-    }
+.brush .extent {
+  stroke: #bbb;
+  fill-opacity: .125;
+}
+.overlay {
+  fill: none;
+  pointer-events: all;
+}
+
+.focus circle {
+  fill: none;
+  stroke: red;
+}
+
+.valeurs {
+  fill: #777;
+}

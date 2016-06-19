@@ -14,8 +14,6 @@
 
   <script>
 
-  // Traduction en français des dates
-
   var fr = d3.locale({
             "decimal": ",",
             "thousands": " ",
@@ -33,11 +31,13 @@
   var format = fr.timeFormat.multi([
           ["%a %d", function(d) { return d.getDay() && d.getDate() != 1; }],
           ["%d %b", function(d) { return d.getDate() != 1; }],
-          ["%B", function(d) { return d.getMonth(); }],
+          ["%b", function(d) { return d.getMonth(); }],
           ["%Y", function() { return true; }]
         ]);
 
-  var margin = {top: 10, right: 10, bottom: 100, left: 40},
+  var bisectDate = d3.bisector(function(d) { return d.date; }).left;
+
+  var margin = {top: 30, right: 10, bottom: 100, left: 40},
       margin2 = {top: 430, right: 10, bottom: 20, left: 40},
       width = 800 - margin.left - margin.right,
       height = 500 - margin.top - margin.bottom,
@@ -77,15 +77,16 @@
       .attr("width", width)
       .attr("height", height);
 
-  var focus = svg.append("g")
-      .attr("class", "focus")
+  var graph = svg.append("g")
+      .attr("class", "graph")
       .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-  var context = svg.append("g")
-      .attr("class", "context")
+  var map = svg.append("g")
+      .attr("class", "map")
       .attr("transform", "translate(" + margin2.left + "," + margin2.top + ")");
 
   d3.json('json/assets/FR0000077919.json', function(err, data) {
+
     var d = []
     for (i in data) {
       d.push({
@@ -100,43 +101,81 @@
     x2.domain(x.domain());
     y2.domain(y.domain());
 
-    focus.append("path")
+    graph.append("path")
         .datum(data)
         .attr("class", "line")
-        .attr("d", area);
+        .attr("d", area)
+        .style("clip-path", " url(#clip)");
 
-    focus.append("g")
+    graph.append("g")
         .attr("class", "x axis")
         .attr("transform", "translate(0," + height + ")")
         .call(xAxis);
 
-    focus.append("g")
+    graph.append("g")
         .attr("class", "y axis")
         .call(yAxis);
 
-    context.append("path")
+    map.append("path")
         .datum(data)
         .attr("class", "area")
-        .attr("d", area2);
+        .attr("d", area2)
+        .style("clip-path", " url(#clip)");
 
-    context.append("g")
+    map.append("g")
         .attr("class", "x axis")
         .attr("transform", "translate(0," + height2 + ")")
         .call(xAxis2);
 
-    context.append("g")
+    map.append("g")
         .attr("class", "x brush")
         .call(brush)
-      .selectAll("rect")
+        .selectAll("rect")
         .attr("y", -6)
         .attr("height", height2 + 7);
-  });
 
-  function brushed() {
-    x.domain(brush.empty() ? x2.domain() : brush.extent());
-    focus.select(".area").attr("d", area);
-    focus.select(".line").attr("d", area);
-    focus.select(".x.axis").call(xAxis);
-  }
+
+
+    // Affichage des valeurs
+
+    var focus = svg.append("g")
+          .attr("class", "focus")
+          .style("display", "none");
+
+        focus.append("circle")
+          .attr("r", 2.5)
+          .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    var helper = graph.append('g')
+        .style('text-anchor', 'end')
+        .attr('transform', 'translate(' + width + ', -5)');
+
+    var text = helper.append('text')
+               .attr('class', 'valeurs');
+
+    svg.append("rect")
+        .attr("class", "overlay")
+        .attr("width", width)
+        .attr("height", height)
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+        .on("mouseover", function() { focus.style("display", null); })
+        .on("mouseout", function() { focus.style("display", "none"); })
+        .on("mousemove", function() {
+            var x0 = x.invert(d3.mouse(this)[0]),
+                i = d3.bisector(function(d) { return d.date; }).left(data, x0, 1),
+                d = x0 - data[i - 1].date > data[i].date - x0 ? data[i] : data[i - 1];
+                focus.attr("transform", "translate(" + x(d.date) +  "," + y(d.price) + ")");
+                text.text(fr.timeFormat('%A %e %B %Y')(d.date) + ' – ' + fr.numberFormat(",.2f")(d.price) + " €");
+        });
+
+    });
+
+
+    function brushed() {
+      x.domain(brush.empty() ? x2.domain() : brush.extent());
+      graph.select(".area").attr("d", area);
+      graph.select(".line").attr("d", area);
+      graph.select(".x.axis").call(xAxis);
+    }
 
 </script>
