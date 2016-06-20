@@ -17,9 +17,11 @@ var fr = d3.locale({
           "months": ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"],
           "shortMonths": ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juill.", "août", "sept.", "oct.", "nov.", "déc."] })
 
-var format = fr.timeFormat.multi([
-            ["%a %d", function(d) { return d.getDay() && d.getDate() != 1; }],
-            ["%d %b", function(d) { return d.getDate() != 1; }],
-            ["%b", function(d) { return d.getMonth(); }],
-            ["%Y", function() { return true; }]
-          ]);
+var fr_time  = fr.timeFormat('%A %e %B %Y'),
+    fr_digit = fr.numberFormat(",.2f"),
+    fr_axis  = fr.timeFormat.multi([
+                ["%a %d", function(d) { return d.getDay() && d.getDate() != 1; }],
+                ["%d %b", function(d) { return d.getDate() != 1; }],
+                ["%b", function(d) { return d.getMonth(); }],
+                ["%Y", function() { return true; }]
+              ]);
