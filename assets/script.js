@@ -17,7 +17,7 @@ function stocks(div) {
           left   =  40;
 
 
-    // Définition des axes
+    // Définition des échelles
 
       var x  = d3.time.scale().range([0, width]),
           x2 = d3.time.scale().range([0, width]),
@@ -44,11 +44,26 @@ function stocks(div) {
             .attr("class", "graph")
             .attr("transform", "translate("+left+","+top+")");
 
+    // Créations des courbes
 
-    // Affichage du sélecteur
+      graph.append("path")
+          .attr("class", "line")
+          .style("clip-path", " url(#clip)");
+
+      var price = d3.svg.line()
+          .interpolate("basis")
+          .x(function(d) { return x(d.date) })
+          .y(function(d) { return y(d.price) });
+
+
+    // Création du sélecteur
 
       var map = svg.append("g")
             .attr("transform", "translate("+left+","+(height+bottom)+")");
+
+      map.append("path")
+         .attr("class", "area")
+         .style("clip-path", " url(#clip)")
 
       var zoom = d3.svg.area()
             .interpolate("monotone")
@@ -60,6 +75,13 @@ function stocks(div) {
             .x(x2)
             .on("brush", brushed);
 
+      map.append("g")
+            .attr("class", "x brush")
+            .call(brush)
+            .selectAll("rect")
+            .attr("y", -6)
+            .attr("height", bottom + 5);
+
       function brushed() {
         x.domain(brush.empty() ? x2.domain() : brush.extent());
         graph.select(".area").attr("d", price);
@@ -68,18 +90,45 @@ function stocks(div) {
       }
 
 
+    // Créations des axes
 
-    // Définition des courbes
+      graph.append("g")
+          .attr("class", "x axis")
+          .attr("transform", "translate(0,"+height+")");
 
-      var price = d3.svg.line()
-            .interpolate("basis")
-            .x(function(d) { return x(d.date) })
-            .y(function(d) { return y(d.price) });
+      graph.append("g")
+          .attr("class", "y axis");
+
+      map.append("g")
+          .attr("class", "x axis")
+          .attr("transform", "translate(0,"+bottom+")");
+
+    // Affichage des valeurs
+
+      var focus = svg.append("g")
+          .attr("class", "focus")
+          .style("display", "none");
+
+      focus.append("circle")
+        .attr("r", 2.5)
+        .attr("transform", "translate("+left+","+top+")");
+
+      var text = graph.append('g')
+          .style('text-anchor', 'end')
+          .attr('transform', 'translate('+width+',-5)')
+          .append('text')
+          .attr('class', 'valeurs');
+
+      svg.append("rect")
+            .attr("class", "overlay")
+            .attr("width", width)
+            .attr("height", height)
+            .attr("transform", "translate("+left+","+top+")");
 
 
-      d3.json('json/assets/FR0000077919.json', function(err, data) {
+      function draw_data(err, data) {
 
-        // Chargement des données
+        // Lecture des données
 
           var d = []
           for (var i in data) {
@@ -90,86 +139,58 @@ function stocks(div) {
           }
           data = d
 
-        // Réinitialisation des axes par défaut
+        // Calcul des intervalles
 
           x.domain(d3.extent(data.map(function(d) { return d.date; })));
           y.domain([0, d3.max(data.map(function(d) { return d.price; }))]);
           x2.domain(x.domain());
           y2.domain(y.domain());
 
-          graph.append("path")
-                .datum(data)
-                .attr("class", "line")
-                .attr("d", price)
-                .style("clip-path", " url(#clip)");
+        // Calcul des axes
 
-          graph.append("g")
-                .attr("class", "x axis")
-                .attr("transform", "translate(0,"+height+")")
-                .call(x_axis);
+          svg.select(".x.axis")
+              .call(x_axis);
 
-          graph.append("g")
-                .attr("class", "y axis")
-                .call(y_axes);
+          graph.select(".y.axis")
+              .call(y_axes);
 
-          map.append("path")
-                .datum(data)
-                .attr("class", "area")
-                .attr("d", zoom)
-                .style("clip-path", " url(#clip)");
+          map.select(".x.axis")
+              .call(x_axis);
 
-          map.append("g")
-                .attr("class", "x axis")
-                .attr("transform", "translate(0,"+bottom+")")
-                .call(x_axis);
+        // Calcul des courbes
 
-          map.append("g")
-                .attr("class", "x brush")
-                .call(brush)
-                .selectAll("rect")
-                .attr("y", -6)
-                .attr("height", bottom + 7);
+          graph.select(".line")
+              .datum(data)
+              .attr("d", price);
 
-          var focus = svg.append("g")
-                .attr("class", "focus")
-                .style("display", "none");
+          map.select(".area")
+              .datum(data)
+              .attr("d", zoom);
 
-              focus.append("circle")
-                .attr("r", 2.5)
-                .attr("transform", "translate("+left+","+top+")");
+        // Affichage des valeurs
 
-          var text = graph.append('g')
-                .style('text-anchor', 'end')
-                .attr('transform', 'translate('+width+',-5)')
-                .append('text')
-                .attr('class', 'valeurs');
+          svg.select(".overlay")
+              .on("mousemove", show_price)
+              .on("mouseover", function() { focus.style("display", null); })
+              .on("mouseout", function() {
+                  focus.style("display", "none");
+                  text.text('');
+                });
 
-          svg.append("rect")
-                .attr("class", "overlay")
-                .attr("width", width)
-                .attr("height", height)
-                .attr("transform", "translate("+left+","+top+")")
-                .on("mousemove", show_price)
-                .on("mouseover", function() {
-                    focus.style("display", null);
-                  })
-                .on("mouseout", function() {
-                    focus.style("display", "none");
-                    text.text('');
-                  });
+        function show_price() {
+          var x0 = x.invert(d3.mouse(this)[0]),
+              i = d3.bisector(function(d){return d.date}).left(data, x0, 1),
+              d0 = data[i - 1],
+              d1 = data[i],
+              d = x0 - d0.date > d1.date - x0 ? d1 : d0;
 
-          function show_price() {
-            var x0 = x.invert(d3.mouse(this)[0]),
-                i = d3.bisector(function(d){return d.date}).left(data, x0, 1),
-                d0 = data[i - 1],
-                d1 = data[i],
-                d = x0 - d0.date > d1.date - x0 ? d1 : d0;
+          focus.attr("transform", "translate("+x(d.date)+","+y(d.price)+")");
+          text.text(fr_time(d.date) + ' – ' + fr_digit(d.price) + " €");
+        }
 
-            focus.attr("transform", "translate("+x(d.date)+","+y(d.price)+")");
-            text.text(fr_time(d.date) + ' – ' + fr_digit(d.price) + " €");
-          }
+      }
 
-      });
+      d3.json('json/assets/FR0000077919.json', draw_data);
 
 }
 
