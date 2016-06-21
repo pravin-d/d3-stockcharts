@@ -218,7 +218,7 @@ function stocks(div) {
 
       $.y  = d3.scale.linear().range([$.height, 0]);
       $.y.domain($.compute_domain($.data, "price"));
-      $.y_axis = d3.svg.axis().scale($.y).orient("left");
+      $.y_axis = d3.svg.axis().scale($.y).orient("left").tickSize(-$.width, 0);
 
       $.x2.domain($.x.domain());
       $.y2.domain($.y.domain());
@@ -227,9 +227,14 @@ function stocks(div) {
         var percent = function(x) { return d3.format("+.0%")(x - 1); };
 
         $.y  = d3.scale.log().range([$.height, 0]);
-        $.y_axis = d3.svg.axis().scale($.y).orient("left").tickFormat(percent);
+        $.y_axis = d3.svg.axis()
+            .scale($.y)
+            .orient("left")
+            .tickSize(-$.width, 0)
+            .tickFormat(percent);
         $.y.domain($.compute_domain($.data, "ratio_price"));
         $.y_axis.tickValues(d3.scale.linear().domain($.y.domain()).ticks(8));
+
       }
 
 
@@ -239,7 +244,9 @@ function stocks(div) {
           .call($.x_axis);
 
       $.graph.select(".y.axis")
-          .call($.y_axis);
+          .call($.y_axis)
+           .selectAll(".tick")
+           .classed("tick-one", function(d) { return Math.abs(d-1) < 1e-6; });
 
       $.map.select(".x.axis")
           .call($.x_axis);

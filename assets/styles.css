@@ -39,6 +39,12 @@ svg {
   stroke: #bbb;
   fill-opacity: .125;
 }
+
+
+.axis.y .tick:not(.tick-one) line {
+  stroke-opacity: .1;
+}
+
 .overlay {
   fill: none;
   pointer-events: all;
