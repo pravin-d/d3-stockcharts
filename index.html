@@ -6,7 +6,6 @@
   <link href="assets/styles.css" rel="stylesheet" />
   <script src="assets/d3.js"></script>
   <script src="assets/d3.fr.js"></script>
-  <script src="assets/awesomplete.js"></script>
 </head>
 
 <body>
@@ -19,8 +18,10 @@
 
   <script>
 
-  var graph = new stocks('.stocks');
+    var graph = new stocks('.stocks');
+    d3.json('json/assets/LU0141799501.json', graph.read);
 
-  d3.json('json/assets/LU0141799501.json', graph.draw);
+  </script>
 
-</script>
+</body>
+</html>
