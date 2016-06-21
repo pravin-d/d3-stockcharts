@@ -35,11 +35,9 @@ function stocks(div) {
 
       $.x  = d3.time.scale().range([0, $.width]);
       $.x2 = d3.time.scale().range([0, $.width]);
-      $.y  = d3.scale.linear().range([$.height, 0]);
       $.y2 = d3.scale.linear().range([$.bottom, 0]);
 
       $.x_axis = d3.svg.axis().scale($.x).orient("bottom").tickFormat(fr_axis);
-      $.y_axis = d3.svg.axis().scale($.y).orient("left");
 
 
     // Création de l'espace de travail
@@ -64,11 +62,6 @@ function stocks(div) {
       $.graph.append("path")
           .attr("class", "line")
           .style("clip-path", " url(#clip)");
-
-      $.price = d3.svg.line()
-          .interpolate("monotone")
-          .x(function(d) { return $.x(d.date) })
-          .y(function(d) { return $.y(d.price) });
 
 
     // Création du sélecteur
@@ -135,7 +128,7 @@ function stocks(div) {
   // Calcul de l'ensemble d'arrivée
   // ------------------------------
 
-  this.compute_domain = function(data, key, ext) {
+  this.compute_domain = function(data, key, ext="") {
 
       function val(d, value) {
         return (d.date >= ext[0] && d.date <= ext[1]) ? d[key] : value;
@@ -153,7 +146,7 @@ function stocks(div) {
     // Calcul sur une plage donnée
 
       else {
-        var dom = $.compute_domain(data, key, ""),
+        var dom = $.compute_domain(data, key),
             min = d3.min(data.map(function(d) { return val(d, dom[1]) })),
             max = d3.max(data.map(function(d) { return val(d, dom[0]) })),
             min = (4 * min + dom[0])/5,
@@ -165,6 +158,21 @@ function stocks(div) {
 
       var Δ = (max-min) * 0.1;
       return [min - Δ, max + Δ];
+  }
+
+
+
+  // Calcul des pourcentages
+  // -----------------------
+
+  this.compute_ratio = function(base) {
+
+    for (var c in $.curves) {
+        $.data.forEach(function(d) {
+          d['ratio_' + $.curves[c]] = d[$.curves[c]] / base;
+        });
+      }
+
   }
 
 
@@ -194,19 +202,38 @@ function stocks(div) {
   // Affichage du graphique
   // ----------------------
 
-  this.draw = function() {
+  this.draw = function(type="absolute") {
 
+    // Calcul des données
+
+      if (type == "relative") {
+        $.compute_ratio($.data[0].price);
+      }
+
+      var pre = (type == "relative") ? "ratio_" : "";
 
     // Calcul des intervalles
 
       $.x.domain(d3.extent($.data.map(function(d) { return d.date })));
-      $.y.domain($.compute_domain($.data, 'price', ""));
+
+      $.y  = d3.scale.linear().range([$.height, 0]);
+      $.y.domain($.compute_domain($.data, "price"));
+      $.y_axis = d3.svg.axis().scale($.y).orient("left");
 
       $.x2.domain($.x.domain());
       $.y2.domain($.y.domain());
 
+      if (type == "relative") {
+        var percent = function(x) { return d3.format("+.0%")(x - 1); };
 
-    // Calcul des axes
+        $.y  = d3.scale.log().range([$.height, 0]);
+        $.y_axis = d3.svg.axis().scale($.y).orient("left").tickFormat(percent);
+        $.y.domain($.compute_domain($.data, "ratio_price"));
+        $.y_axis.tickValues(d3.scale.linear().domain($.y.domain()).ticks(8));
+      }
+
+
+    // Affichages des axes
 
       $.svg.select(".x.axis")
           .call($.x_axis);
@@ -225,6 +252,11 @@ function stocks(div) {
 
 
     // Calcul des courbes
+
+      $.price = d3.svg.line()
+          .x(function(d) { return $.x(d.date) })
+          .y(function(d) { return $.y(
+              d[pre + "price"]) });
 
       $.graph.select(".line")
           .datum($.data).transition().duration(1000)
@@ -265,97 +297,39 @@ function stocks(div) {
       $.brush.on("brush", function () {
           var ext = $.brush.extent();
 
+          if (type == "relative") {
+
+            var basedate = d3.min($.data.map(function(d)
+                                    {if (d.date >= ext[0]) return d.date})),
+                basevalue = graph.data.find(function (d)
+                                      {return d.date == basedate; }).price;
+
+            $.compute_ratio(basevalue);
+
+          }
+
           if (!$.brush.empty()) {
               $.x.domain($.brush.empty() ? $.x2.domain() : $.brush.extent());
-              $.y.domain($.compute_domain($.data, 'price', ext));
+              $.y.domain($.compute_domain($.data, pre + "price", ext));
           }
 
           else {
             $.x.domain(d3.extent($.data.map(function(d) { return d.date })));
-            $.y.domain($.compute_domain($.data, 'price', ""));
+            $.y.domain($.compute_domain($.data, pre + "price"));
+          }
+
+          if (type == "relative") {
+            $.y_axis.tickValues(d3.scale.linear()
+                .domain($.y.domain())
+                .ticks(8));
           }
 
           $.graph.select(".area").attr("d", $.price);
           $.graph.select(".line").attr("d", $.price);
           $.graph.select(".x.axis").call($.x_axis);
           $.graph.select(".y.axis").call($.y_axis);
-      });
-  }
-
-
-
-  // Affichage sous forme de pourcentages
-  // ------------------------------------
-
-  this.pourcentage = function() {
-
-    // Calcul des données
-
-      var baseValue = $.data[0].price;
-
-      $.data.forEach(function(d) {
-        d.ratio = d.price / baseValue;
-      });
-
-
-    // Affichage des axes
-
-      var percent = function(x) { return d3.format("+.0%")(x - 1); };
-
-      $.y  = d3.scale.log().range([$.height, 0]);
-      $.y_axis = d3.svg.axis().scale($.y).orient("left").tickFormat(percent);
-      $.y.domain($.compute_domain($.data, 'ratio', ""));
-      $.y_axis.tickValues(d3.scale.linear().domain($.y.domain()).ticks(8));
-      $.graph.select(".y.axis").call($.y_axis);
-
-
-    // Affichage des courbes
-
-      $.ratio = d3.svg.line()
-          .interpolate("monotone")
-          .x(function(d) { return $.x(d.date) })
-          .y(function(d) { return $.y(d.ratio) });
-
-      $.graph.select(".line")
-          .datum($.data).transition().duration(1000)
-          .attr("d", $.ratio);
-
-
-    // Zoom sur la sélection
-
-      $.brush.on("brush", function () {
-
-          var ext = $.brush.extent();
-
-          var basedate = d3.min($.data.map(function(d)
-                                    {if (d.date >= ext[0]) return d.date})),
-              basevalue = graph.data.find(function (d)
-                                    {return d.date == basedate; }).price;
-
-          $.data.forEach(function(d) {
-            d.ratio = d.price / basevalue;
-          });
-
-          if (!$.brush.empty()) {
-              $.x.domain($.brush.empty() ? $.x2.domain() : $.brush.extent());
-              $.y.domain($.compute_domain($.data, 'ratio', ext));
-          }
-
-          else {
-            $.x.domain(d3.extent($.data.map(function(d) { return d.date })));
-            $.y.domain($.compute_domain($.data, 'ratio', ""));
-          }
-
-          $.y_axis.tickValues(d3.scale.linear()
-              .domain($.y.domain())
-              .ticks(8));
-
-          $.graph.select(".line").attr("d", $.ratio);
-          $.graph.select(".x.axis").call($.x_axis);
-          $.graph.select(".y.axis").call($.y_axis);
 
       });
-
   }
 
 
