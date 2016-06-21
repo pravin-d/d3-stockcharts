@@ -129,13 +129,8 @@ function stocks(div) {
 
         // Calcul des intervalles
 
-          x.domain(d3.extent(data.map(function(d) { return d.date; })));
-
-          var min = d3.min(data.map(function(d) { return d.price; })),
-              max = d3.max(data.map(function(d) { return d.price; })),
-              Δ = (min+max) / 2 * 0.05;
-
-          y.domain([min - Δ, max + Δ]);
+          x.domain(d3.extent(data.map(function(d) { return d.date })));
+          y.domain(compute_domain(data, ''));
 
           x2.domain(x.domain());
           y2.domain(y.domain());
@@ -171,7 +166,7 @@ function stocks(div) {
 
           svg.select(".overlay")
               .on("mousemove", show_price)
-              .on("mouseover", function() { focus.style("display", null); })
+              .on("mouseover", function() { focus.style("display", null) })
               .on("mouseout", function() {
                   focus.style("display", "none");
                   text.text('');
@@ -191,30 +186,55 @@ function stocks(div) {
             text.text(fr_time(d.date) + ' – ' + fr_digit(d.price) + " €");
         }
 
-
-        brush.on("brush", brushed);
-
-        function brushed() {
-
+        brush.on("brush", function () {
           // Affichage de la sélection
 
             var ext = brush.extent();
-            x.domain(brush.empty() ? x2.domain() : brush.extent());
+
+            if (!brush.empty()) {
+                x.domain(brush.empty() ? x2.domain() : brush.extent());
+                y.domain(compute_domain(data, ext));
+            }
+
+            else {
+              x.domain(d3.extent(data.map(function(d) { return d.date })));
+              y.domain(compute_domain(data, ''));
+            }
 
             graph.select(".area").attr("d", price);
             graph.select(".line").attr("d", price);
             graph.select(".x.axis").call(x_axis);
             graph.select(".y.axis").call(y_axis);
-        }
+        });
 
+      };
+
+
+      function compute_domain(data, ext) {
+
+        // Calcule le domaine sur la plage donnée
+          function val(d, value) {
+            return (d.date >= ext[0] && d.date <= ext[1]) ? d.price : value;
+          }
+
+          if (!ext) {
+            var min = d3.min(data.map(function(d) { return d.price })),
+                max = d3.max(data.map(function(d) { return d.price }));
+          }
+
+          else {
+            var dom = compute_domain(data, ''),
+                min = d3.min(data.map(function(d) { return val(d, dom[1]) })),
+                max = d3.max(data.map(function(d) { return val(d, dom[0]) })),
+                min = (min + dom[0])/2,
+                max = (max + dom[1])/2;
+          }
+
+          var Δ = (max-min) * 0.02;
+          return [min - Δ, max + Δ];
       }
 
       d3.json('json/assets/LU0141799501.json', draw_data);
-
-
-      d3.json('json/assets/FR0007064324.json', draw_data);
-
-
 
 }
 
