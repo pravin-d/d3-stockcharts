@@ -5,7 +5,10 @@
 
 "use strict";
 
+
 function stocks(div) {
+
+  this.init = function() {
 
     // Modèles de boîtes
 
@@ -114,102 +117,6 @@ function stocks(div) {
           .attr("transform", "translate("+left+","+top+")");
 
 
-      function draw_data(err, data) {
-
-        // Lecture des données
-
-          var d = []
-          for (var i in data) {
-            d.push({
-              'price': parseFloat(data[i]),
-              'date': d3.time.format('%Y-%m-%d').parse(i)
-            })
-          }
-          data = d
-
-        // Calcul des intervalles
-
-          x.domain(d3.extent(data.map(function(d) { return d.date })));
-          y.domain(compute_domain(data, ''));
-
-          x2.domain(x.domain());
-          y2.domain(y.domain());
-
-        // Calcul des axes
-
-          svg.select(".x.axis")
-              .call(x_axis);
-
-          graph.select(".y.axis")
-              .call(y_axis);
-
-          map.select(".x.axis")
-              .call(x_axis);
-
-          map.select(".x.brush")
-              .call(brush)
-              .selectAll("rect")
-              .attr("y", -6)
-              .attr("height", bottom + 5);
-
-        // Calcul des courbes
-
-          graph.select(".line")
-              .datum(data)
-              .attr("d", price);
-
-          map.select(".area")
-              .datum(data)
-              .attr("d", zoom);
-
-        // Affichage des valeurs
-
-          svg.select(".overlay")
-              .on("mousemove", show_price)
-              .on("mouseover", function() { focus.style("display", null) })
-              .on("mouseout", function() {
-                  focus.style("display", "none");
-                  text.text('');
-                });
-
-        function show_price() {
-
-          // Affichage du prix
-
-            var x0 = x.invert(d3.mouse(this)[0]),
-                i = d3.bisector(function(d){return d.date}).left(data, x0, 1),
-                d0 = data[i - 1],
-                d1 = data[i],
-                d = x0 - d0.date > d1.date - x0 ? d1 : d0;
-
-            focus.attr("transform", "translate("+x(d.date)+","+y(d.price)+")");
-            text.text(fr_time(d.date) + ' – ' + fr_digit(d.price) + " €");
-        }
-
-        brush.on("brush", function () {
-          // Affichage de la sélection
-
-            var ext = brush.extent();
-
-            if (!brush.empty()) {
-                x.domain(brush.empty() ? x2.domain() : brush.extent());
-                y.domain(compute_domain(data, ext));
-            }
-
-            else {
-              x.domain(d3.extent(data.map(function(d) { return d.date })));
-              y.domain(compute_domain(data, ''));
-            }
-
-            graph.select(".area").attr("d", price);
-            graph.select(".line").attr("d", price);
-            graph.select(".x.axis").call(x_axis);
-            graph.select(".y.axis").call(y_axis);
-        });
-
-      };
-
-
       function compute_domain(data, ext) {
 
         // Calcule le domaine sur la plage donnée
@@ -234,7 +141,104 @@ function stocks(div) {
           return [min - Δ, max + Δ];
       }
 
-      d3.json('json/assets/LU0141799501.json', draw_data);
+
+  this.draw = function(err, data) {
+
+    // Lecture des données
+
+      var d = []
+      for (var i in data) {
+        d.push({
+          'price': parseFloat(data[i]),
+          'date': d3.time.format('%Y-%m-%d').parse(i)
+        })
+      }
+      data = d
+
+    // Calcul des intervalles
+
+      x.domain(d3.extent(data.map(function(d) { return d.date })));
+      y.domain(compute_domain(data, ''));
+
+      x2.domain(x.domain());
+      y2.domain(y.domain());
+
+    // Calcul des axes
+
+      svg.select(".x.axis")
+          .call(x_axis);
+
+      graph.select(".y.axis")
+          .call(y_axis);
+
+      map.select(".x.axis")
+          .call(x_axis);
+
+      map.select(".x.brush")
+          .call(brush)
+          .selectAll("rect")
+          .attr("y", -6)
+          .attr("height", bottom + 5);
+
+    // Calcul des courbes
+
+      graph.select(".line")
+          .datum(data)
+          .attr("d", price);
+
+      map.select(".area")
+          .datum(data)
+          .attr("d", zoom);
+
+    // Affichage des valeurs
+
+      svg.select(".overlay")
+          .on("mousemove", show_price)
+          .on("mouseover", function() { focus.style("display", null) })
+          .on("mouseout", function() {
+              focus.style("display", "none");
+              text.text('');
+            });
+
+      function show_price() {
+
+        // Affichage du prix
+
+          var x0 = x.invert(d3.mouse(this)[0]),
+              i = d3.bisector(function(d){return d.date}).left(data, x0, 1),
+              d0 = data[i - 1],
+              d1 = data[i],
+              d = x0 - d0.date > d1.date - x0 ? d1 : d0;
+
+          focus.attr("transform", "translate("+x(d.date)+","+y(d.price)+")");
+          text.text(fr_time(d.date) + ' – ' + fr_digit(d.price) + " €");
+      }
+
+      brush.on("brush", function () {
+        // Affichage de la sélection
+
+          var ext = brush.extent();
+
+          if (!brush.empty()) {
+              x.domain(brush.empty() ? x2.domain() : brush.extent());
+              y.domain(compute_domain(data, ext));
+          }
+
+          else {
+            x.domain(d3.extent(data.map(function(d) { return d.date })));
+            y.domain(compute_domain(data, ''));
+          }
+
+          graph.select(".area").attr("d", price);
+          graph.select(".line").attr("d", price);
+          graph.select(".x.axis").call(x_axis);
+          graph.select(".y.axis").call(y_axis);
+      });
+    };
+  }
+
+  var $ = this;
+  $.init();
 
 }
 
