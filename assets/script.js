@@ -8,18 +8,28 @@
 
 function stocks(div) {
 
+
+  // Initialisation du graphique
+  // ---------------------------
+
   this.init = function() {
+
+    // Données à afficher sur le graphique
+
+      $.curves = ["price"];
+
 
     // Modèles de boîtes
 
-      var padding =  60,
-          top     =  30,
-          right   =  10,
-          left    =  50;
-
       $.width   = 760;
       $.height  = 350;
+      $.padding =  60;
+
+      $.top     =  30;
+      $.right   =  10;
       $.bottom  = 100;
+      $.left    =  50;
+
 
     // Définition des échelles
 
@@ -28,7 +38,6 @@ function stocks(div) {
       $.y  = d3.scale.linear().range([$.height, 0]);
       $.y2 = d3.scale.linear().range([$.bottom, 0]);
 
-
       $.x_axis = d3.svg.axis().scale($.x).orient("bottom").tickFormat(fr_axis);
       $.y_axis = d3.svg.axis().scale($.y).orient("left");
 
@@ -36,8 +45,8 @@ function stocks(div) {
     // Création de l'espace de travail
 
       $.svg = d3.select(div).append("svg")
-          .attr("width", $.width + left + right)
-          .attr("height", $.height + top + padding + $.bottom);
+          .attr("width", $.width + $.left + $.right)
+          .attr("height", $.height + $.top + $.padding + $.bottom);
 
       $.svg.append("defs").append("clipPath")
           .attr("id", "clip")
@@ -47,7 +56,8 @@ function stocks(div) {
 
       $.graph = $.svg.append("g")
           .attr("class", "graph")
-          .attr("transform", "translate("+left+","+top+")");
+          .attr("transform", "translate("+$.left+","+$.top+")");
+
 
     // Créations des courbes
 
@@ -64,7 +74,7 @@ function stocks(div) {
     // Création du sélecteur
 
       $.map = $.svg.append("g")
-          .attr("transform", "translate("+left+","+($.height+padding)+")");
+          .attr("transform", "translate("+$.left+","+($.height+$.padding)+")");
 
       $.map.append("path")
           .attr("class", "area")
@@ -82,6 +92,7 @@ function stocks(div) {
       $.map.append("g")
           .attr("class", "x brush");
 
+
     // Créations des axes
 
       $.graph.append("g")
@@ -95,6 +106,7 @@ function stocks(div) {
           .attr("class", "x axis")
           .attr("transform", "translate(0,"+$.bottom+")");
 
+
     // Affichage des valeurs
 
       $.focus = $.svg.append("g")
@@ -103,46 +115,62 @@ function stocks(div) {
 
       $.focus.append("circle")
           .attr("r", 2.5)
-          .attr("transform", "translate("+left+","+top+")");
+          .attr("transform", "translate("+$.left+","+$.top+")");
 
-      $.text = $.graph.append('g')
-          .style('text-anchor', 'end')
-          .attr('transform', 'translate('+$.width+',-5)')
-          .append('text')
-          .attr('class', 'valeurs');
+      $.text = $.graph.append("g")
+          .style("text-anchor", "end")
+          .attr("transform", "translate("+$.width+",-5)")
+          .append("text")
+          .attr("class", "valeurs");
 
       $.svg.append("rect")
           .attr("class", "overlay")
           .attr("width", $.width)
           .attr("height", $.height)
-          .attr("transform", "translate("+left+","+top+")");
+          .attr("transform", "translate("+$.left+","+$.top+")");
   }
 
 
+
+  // Calcul de l'ensemble d'arrivée
+  // ------------------------------
+
   this.compute_domain = function(data, key, ext) {
 
-    // Calcule le domaine sur la plage donnée
       function val(d, value) {
         return (d.date >= ext[0] && d.date <= ext[1]) ? d[key] : value;
       }
+
+
+    // Calcul sur l'ensemble des valeurs
 
       if (!ext) {
         var min = d3.min(data.map(function(d) { return d[key] })),
             max = d3.max(data.map(function(d) { return d[key] }));
       }
 
+
+    // Calcul sur une plage donnée
+
       else {
-        var dom = $.compute_domain(data, key, ''),
+        var dom = $.compute_domain(data, key, ""),
             min = d3.min(data.map(function(d) { return val(d, dom[1]) })),
             max = d3.max(data.map(function(d) { return val(d, dom[0]) })),
             min = (4 * min + dom[0])/5,
             max = (4 * max + dom[1])/5;
       }
 
+
+    // Retour de l'ensemble avec une marge
+
       var Δ = (max-min) * 0.1;
       return [min - Δ, max + Δ];
   }
 
+
+
+  // Importation des données en JSON
+  // -------------------------------
 
   this.read = function(err, data) {
 
@@ -162,15 +190,21 @@ function stocks(div) {
   }
 
 
+
+  // Affichage du graphique
+  // ----------------------
+
   this.draw = function() {
+
 
     // Calcul des intervalles
 
       $.x.domain(d3.extent($.data.map(function(d) { return d.date })));
-      $.y.domain($.compute_domain($.data, 'price', ''));
+      $.y.domain($.compute_domain($.data, 'price', ""));
 
       $.x2.domain($.x.domain());
       $.y2.domain($.y.domain());
+
 
     // Calcul des axes
 
@@ -189,6 +223,7 @@ function stocks(div) {
           .attr("y", -6)
           .attr("height", $.bottom + 5);
 
+
     // Calcul des courbes
 
       $.graph.select(".line")
@@ -199,6 +234,7 @@ function stocks(div) {
           .datum($.data)
           .attr("d", $.zoom);
 
+
     // Affichage des valeurs
 
       $.svg.select(".overlay")
@@ -206,13 +242,13 @@ function stocks(div) {
           .on("mouseover", function() { $.focus.style("display", null) })
           .on("mouseout", function() {
               $.focus.style("display", "none");
-              $.text.text('');
+              $.text.text("");
             });
 
+
+    // Affichage du prix
+
       function show_price() {
-
-        // Affichage du prix
-
           var x0 = $.x.invert(d3.mouse(this)[0]),
               i = d3.bisector(function(d){return d.date}).left($.data, x0, 1),
               d0 = $.data[i - 1],
@@ -223,9 +259,10 @@ function stocks(div) {
           $.text.text(fr_time(d.date) + ' – ' + fr_digit(d.price) + " €");
       }
 
-      $.brush.on("brush", function () {
-        // Affichage de la sélection
 
+    // Zoom sur la sélection
+
+      $.brush.on("brush", function () {
           var ext = $.brush.extent();
 
           if (!$.brush.empty()) {
@@ -235,7 +272,7 @@ function stocks(div) {
 
           else {
             $.x.domain(d3.extent($.data.map(function(d) { return d.date })));
-            $.y.domain($.compute_domain($.data, 'price', ''));
+            $.y.domain($.compute_domain($.data, 'price', ""));
           }
 
           $.graph.select(".area").attr("d", $.price);
@@ -247,12 +284,12 @@ function stocks(div) {
 
 
 
+  // Affichage sous forme de pourcentages
+  // ------------------------------------
+
   this.pourcentage = function() {
 
-    // Calculs
-
-      var formatPercent = d3.format("+.0%"),
-          formatChange = function(x) { return formatPercent(x - 1); };
+    // Calcul des données
 
       var baseValue = $.data[0].price;
 
@@ -260,15 +297,19 @@ function stocks(div) {
         d.ratio = d.price / baseValue;
       });
 
+
+    // Affichage des axes
+
+      var percent = function(x) { return d3.format("+.0%")(x - 1); };
+
       $.y  = d3.scale.log().range([$.height, 0]);
-      $.y_axis = d3.svg.axis().scale($.y).orient("left").tickFormat(formatChange);
-      $.y.domain($.compute_domain($.data, 'ratio', ''));
-
-      $.y_axis.tickValues(d3.scale.linear()
-          .domain($.y.domain())
-          .ticks(8));
-
+      $.y_axis = d3.svg.axis().scale($.y).orient("left").tickFormat(percent);
+      $.y.domain($.compute_domain($.data, 'ratio', ""));
+      $.y_axis.tickValues(d3.scale.linear().domain($.y.domain()).ticks(8));
       $.graph.select(".y.axis").call($.y_axis);
+
+
+    // Affichage des courbes
 
       $.ratio = d3.svg.line()
           .interpolate("monotone")
@@ -280,8 +321,9 @@ function stocks(div) {
           .attr("d", $.ratio);
 
 
+    // Zoom sur la sélection
+
       $.brush.on("brush", function () {
-        // Affichage de la sélection
 
           var ext = $.brush.extent();
 
@@ -301,7 +343,7 @@ function stocks(div) {
 
           else {
             $.x.domain(d3.extent($.data.map(function(d) { return d.date })));
-            $.y.domain($.compute_domain($.data, 'ratio', ''));
+            $.y.domain($.compute_domain($.data, 'ratio', ""));
           }
 
           $.y_axis.tickValues(d3.scale.linear()
@@ -312,9 +354,6 @@ function stocks(div) {
           $.graph.select(".x.axis").call($.x_axis);
           $.graph.select(".y.axis").call($.y_axis);
 
-
-
-
       });
 
   }
@@ -324,6 +363,3 @@ function stocks(div) {
   $.init();
 
 }
-
-
-// graph.graph.select(".line").datum(graph.data).attr("d", graph.price);
