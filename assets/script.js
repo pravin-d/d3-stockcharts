@@ -128,7 +128,7 @@ function stocks(div) {
   // Calcul de l'ensemble d'arrivée
   // ------------------------------
 
-  this.compute_domain = function(data, key, ext="") {
+  this.compute_domain = function(data, key, ext) {
 
       function val(d, value) {
         return (d.date >= ext[0] && d.date <= ext[1]) ? d[key] : value;
@@ -137,7 +137,7 @@ function stocks(div) {
 
     // Calcul sur l'ensemble des valeurs
 
-      if (!ext) {
+      if (ext === undefined) {
         var min = d3.min(data.map(function(d) { return d[key] })),
             max = d3.max(data.map(function(d) { return d[key] }));
       }
@@ -202,7 +202,11 @@ function stocks(div) {
   // Affichage du graphique
   // ----------------------
 
-  this.draw = function(type="absolute") {
+  this.draw = function(type) {
+
+    if (type === undefined) {
+      type = "absolute";
+    }
 
     // Calcul des données
 
