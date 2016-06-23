@@ -16,19 +16,19 @@ function stocks(div) {
 
     // Données à afficher sur le graphique
 
-      $.curves = ["price"];
+      $.curves = ["ewma12", "ewma26", "price"];
+      $.variables = $.curves.concat(["bollinger_lower", "bollinger_upper"]);
 
 
     // Modèles de boîtes
 
       $.width   = 760;
       $.height  = 350;
-      $.padding =  60;
-
-      $.top     =  30;
+      $.padding =  40;
+      $.top     =  20;
       $.right   =  10;
-      $.bottom  = 100;
-      $.left    =  50;
+      $.bottom  =  80;
+      $.left    =  40;
 
 
     // Définition des échelles
@@ -36,44 +36,60 @@ function stocks(div) {
       $.x  = d3.time.scale().range([0, $.width]);
       $.x2 = d3.time.scale().range([0, $.width]);
       $.y2 = d3.scale.linear().range([$.bottom, 0]);
-
+      $.y3 = d3.scale.linear().range([$.bottom, 0]);
       $.x_axis = d3.svg.axis().scale($.x).orient("bottom").tickFormat(fr_axis);
-
+      $.y3_axis = d3.svg.axis().scale($.y3).orient("left").tickSize(-$.width, 0).ticks(5);
 
     // Création de l'espace de travail
 
       $.svg = d3.select(div).append("svg")
           .attr("width", $.width + $.left + $.right)
-          .attr("height", $.height + $.top + $.padding + $.bottom);
+          .attr("height", $.height + $.top + 2 * $.padding + 2 * $.bottom);
 
       $.svg.append("defs").append("clipPath")
           .attr("id", "clip")
           .append("rect")
           .attr("width", $.width)
-          .attr("height", $.height);
+          .attr("height", $.height + $.padding + $.bottom);
 
-      $.graph = $.svg.append("g")
-          .attr("class", "graph")
-          .attr("transform", "translate("+$.left+","+$.top+")");
+      $.plot = $.svg.append("g")
+          .attr("class", "plot")
+          .attr("transform", "translate(" + $.left + "," + $.top + ")");
+
+      $.tool = $.svg.append("g")
+          .attr("class", "tool")
+          .attr("transform", "translate(" + $.left + "," +
+            ($.top + $.height + $.padding * 3 / 4) + ")");
+
+      $.zoom = $.svg.append("g")
+          .attr("transform", "translate(" + $.left + "," +
+              ($.height + 2 * $.padding + $.bottom) + ")");
 
 
     // Créations des courbes
 
-      $.graph.append("path")
-          .attr("class", "line")
+      for (var c in $.curves) {
+        $.plot.append("path")
+          .attr("class", $.curves[c])
           .style("clip-path", " url(#clip)");
+      }
+
+      $.plot.append("path")
+          .attr("class", "bollinger")
+          .style("clip-path", " url(#clip)")
+
+      $.tool.append("path")
+          .attr("class", "macd")
+          .style("clip-path", " url(#clip)")
 
 
     // Création du sélecteur
 
-      $.map = $.svg.append("g")
-          .attr("transform", "translate("+$.left+","+($.height+$.padding)+")");
-
-      $.map.append("path")
+      $.zoom.append("path")
           .attr("class", "area")
           .style("clip-path", " url(#clip)")
 
-      $.zoom = d3.svg.area()
+      $.map = d3.svg.area()
           .interpolate("monotone")
           .x(function(d) { return $.x2(d.date) })
           .y1(function(d) { return $.y2(d.price) })
@@ -82,25 +98,28 @@ function stocks(div) {
       $.brush = d3.svg.brush()
           .x($.x2);
 
-      $.map.append("g")
+      $.zoom.append("g")
           .attr("class", "x brush");
 
 
     // Créations des axes
 
-      $.graph.append("g")
+      $.plot.append("g")
+          .attr("class", "y axis");
+
+      $.plot.append("g")
           .attr("class", "x axis")
           .attr("transform", "translate(0,"+$.height+")");
 
-      $.graph.append("g")
+      $.tool.append("g")
           .attr("class", "y axis");
 
-      $.map.append("g")
+      $.zoom.append("g")
           .attr("class", "x axis")
           .attr("transform", "translate(0,"+$.bottom+")");
 
 
-    // Affichage des valeurs
+    // Affichage des valeurs au survol
 
       $.focus = $.svg.append("g")
           .attr("class", "focus")
@@ -110,7 +129,7 @@ function stocks(div) {
           .attr("r", 2.5)
           .attr("transform", "translate("+$.left+","+$.top+")");
 
-      $.text = $.graph.append("g")
+      $.text = $.plot.append("g")
           .style("text-anchor", "end")
           .attr("transform", "translate("+$.width+",-5)")
           .append("text")
@@ -119,7 +138,7 @@ function stocks(div) {
       $.svg.append("rect")
           .attr("class", "overlay")
           .attr("width", $.width)
-          .attr("height", $.height)
+          .attr("height", $.height + $.padding + $.bottom)
           .attr("transform", "translate("+$.left+","+$.top+")");
   }
 
@@ -167,12 +186,11 @@ function stocks(div) {
 
   this.compute_ratio = function(base) {
 
-    for (var c in $.curves) {
+    for (var c in $.variables) {
         $.data.forEach(function(d) {
-          d['ratio_' + $.curves[c]] = d[$.curves[c]] / base;
+          d['ratio_' + $.variables[c]] = d[$.variables[c]] / base;
         });
       }
-
   }
 
 
@@ -184,15 +202,17 @@ function stocks(div) {
 
     // Lecture des données
 
-      var d = []
-      for (var i in data) {
-        d.push({
-          'price': parseFloat(data[i]),
-          'date': d3.time.format('%Y-%m-%d').parse(i)
-        })
-      }
-      $.data = d;
+      data.forEach(function(d) {
+          d.price = +d.price;
+          d.date = d3.time.format('%Y-%m-%d').parse(d.date);
+          d.ewma12 = +d.ewma12;
+          d.ewma26 = +d.ewma26;
+          d.bollinger_upper = +d.bollinger_upper;
+          d.bollinger_lower = +d.bollinger_lower;
+          d.macd = +d.macd;
+        });
 
+      $.data = data;
       $.draw();
 
   }
@@ -227,6 +247,8 @@ function stocks(div) {
       $.x2.domain($.x.domain());
       $.y2.domain($.y.domain());
 
+      $.y3.domain($.compute_domain($.data, "macd"));
+
       if (type == "relative") {
         var percent = function(x) { return d3.format("+.0%")(x - 1); };
 
@@ -247,15 +269,18 @@ function stocks(div) {
       $.svg.select(".x.axis")
           .call($.x_axis);
 
-      $.graph.select(".y.axis")
+      $.plot.select(".y.axis")
           .call($.y_axis)
            .selectAll(".tick")
            .classed("tick-one", function(d) { return Math.abs(d-1) < 1e-6; });
 
-      $.map.select(".x.axis")
+      $.tool.select(".y.axis")
+          .call($.y3_axis);
+
+      $.zoom.select(".x.axis")
           .call($.x_axis);
 
-      $.map.select(".x.brush")
+      $.zoom.select(".x.brush")
           .call($.brush)
           .selectAll("rect")
           .attr("y", -6)
@@ -264,18 +289,40 @@ function stocks(div) {
 
     // Calcul des courbes
 
-      $.price = d3.svg.line()
+      function draw(curve) {
+        $[curve] = d3.svg.line()
           .x(function(d) { return $.x(d.date) })
-          .y(function(d) { return $.y(
-              d[pre + "price"]) });
+          .y(function(d) { return $.y(d[pre + curve]) });
 
-      $.graph.select(".line")
+        $.plot.select("."+curve)
           .datum($.data).transition().duration(1000)
-          .attr("d", $.price);
+          .attr("d", $[curve]);
+      }
 
-      $.map.select(".area")
+      for (var c in $.curves) {
+        draw($.curves[c]);
+      }
+
+      $.bollinger = d3.svg.area()
+        .x(function(d) { return $.x(d.date) })
+        .y1(function(d) { return $.y(d[pre + "bollinger_upper"]) })
+        .y0(function(d) { return $.y(d[pre + "bollinger_lower"]) });
+
+      $.plot.select(".bollinger")
+        .datum($.data).transition().duration(1000)
+        .attr("d", $.bollinger);
+
+      $.macd = d3.svg.line()
+        .x(function(d) { return $.x(d.date) })
+        .y(function(d) { return $.y3(d.macd) });
+
+      $.tool.select(".macd")
+        .datum($.data)
+        .attr("d", $.macd);
+
+      $.zoom.select(".area")
           .datum($.data)
-          .attr("d", $.zoom);
+          .attr("d", $.map);
 
 
     // Affichage des valeurs
@@ -312,7 +359,7 @@ function stocks(div) {
 
             var basedate = d3.min($.data.map(function(d)
                                     {if (d.date >= ext[0]) return d.date})),
-                basevalue = graph.data.find(function (d)
+                basevalue = $.data.find(function (d)
                                       {return d.date == basedate; }).price;
 
             $.compute_ratio(basevalue);
@@ -335,10 +382,17 @@ function stocks(div) {
                 .ticks(8));
           }
 
-          $.graph.select(".area").attr("d", $.price);
-          $.graph.select(".line").attr("d", $.price);
-          $.graph.select(".x.axis").call($.x_axis);
-          $.graph.select(".y.axis").call($.y_axis);
+
+          for (var c in $.curves) {
+            $.plot.select("."+$.curves[c]).attr("d", $[$.curves[c]]);
+          }
+
+          $.tool.select(".macd").attr("d", $.macd);
+
+          $.plot.select(".area").attr("d", $.price);
+          $.plot.select(".bollinger").attr("d", $.bollinger);
+          $.plot.select(".x.axis").call($.x_axis);
+          $.plot.select(".y.axis").call($.y_axis);
 
       });
   }
