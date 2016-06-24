@@ -12,13 +12,13 @@
 
   <h1>Stocks</h1>
 
-  <div class="stocks"></div>
+  <div id="stocks"></div>
 
   <script src="assets/script.js"></script>
 
   <script>
 
-    var graph = new stocks('.stocks');
+    var graph = new stocks('#stocks');
     d3.csv('data/isin/FR0000077919.csv', graph.read);
 
   </script>

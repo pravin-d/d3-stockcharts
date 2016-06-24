@@ -4,7 +4,7 @@ body {
   margin: 3em auto 1em;
 }
 
-.stocks {
+#stocks {
   border: 30px #f3f3f3 solid;
 }
 
@@ -15,7 +15,11 @@ h1 {
   color: #999;
 }
 
-svg {
+
+/* Définitions principales */
+
+#stocks svg {
+  display: block;
   font-size: 0.75em;
 }
 
