@@ -35,67 +35,68 @@ function stocks(div) {
       $.x_axis = d3.svg.axis().scale($.x)
           .orient("bottom").tickFormat(fr_axis);
 
+
     // Création de l'espace de travail
 
-      $.svg = d3.select(div).append("svg")
+      d3.select(div)
+          .append("svg")
+          .attr("class", "plot")
           .attr("width", $.width + 2 * $.margin)
-          .attr("height", $.height + $.top + $.bottom);
-
-      $.svg.append("defs").append("clipPath")
+          .attr("height", $.height + $.top + $.bottom)
+          .append("defs").append("clipPath")
           .attr("id", "clip")
           .append("rect")
           .attr("width", $.width)
           .attr("height", $.top + $.height + $.bottom);
 
-      $.plot = $.svg.append("g")
-          .attr("class", "plot")
+      var plot = d3.select('svg.plot').append("g")
+          .attr("class", "wrap")
           .attr("transform", "translate(" + $.margin + "," + $.top + ")");
+
 
     // Créations des courbes
 
       for (var c in $.curves) {
-        $.plot.append("path")
-          .attr("class", $.curves[c])
-          .style("clip-path", " url(#clip)");
+        plot.append("path")
+            .attr("class", $.curves[c])
+            .style("clip-path", " url(#clip)");
       }
 
-      $.plot.append("path")
+      plot.append("path")
           .attr("class", "bollinger")
           .style("clip-path", " url(#clip)")
 
 
     // Créations des axes
 
-      $.plot.append("g")
+      plot.append("g")
           .attr("class", "y axis");
 
-      $.plot.append("g")
+      plot.append("g")
           .attr("class", "x axis")
           .attr("transform", "translate(0," + $.height + ")");
 
 
     // Affichage des valeurs au survol
 
-      $.focus = $.svg.append("g")
+      $.focus = plot.append("g")
           .attr("class", "focus")
           .style("display", "none");
 
       $.focus.append("line")
           .attr("y1", "0")
-          .attr("y2", $.height)
-          .attr("transform", "translate(" + $.margin + "," + $.top+")");
+          .attr("y2", $.height);
 
-      $.text = $.plot.append("g")
+      $.text = plot.append("g")
           .style("text-anchor", "end")
           .attr("transform", "translate(" + $.width + ",-5)")
           .append("text")
           .attr("class", "valeurs");
 
-      $.svg.append("rect")
+      plot.append("rect")
           .attr("class", "overlay")
           .attr("width", $.width)
-          .attr("height", $.height)
-          .attr("transform", "translate(" + $.margin+"," + $.top + ")");
+          .attr("height", $.height);
   }
 
 
@@ -166,9 +167,9 @@ function stocks(div) {
         });
 
       $.data = data;
-      $.draw();
+      $.draw_plot();
       $.draw_macd();
-      $.draw_select();
+      $.draw_zoom();
   }
 
 
@@ -176,7 +177,7 @@ function stocks(div) {
   // Affichage du graphique
   // ----------------------
 
-  this.draw = function() {
+  this.draw_plot = function() {
 
     // Calcul des données
 
@@ -211,10 +212,12 @@ function stocks(div) {
 
     // Affichages des axes
 
-      $.svg.select(".x.axis")
+      var plot = d3.select('.plot .wrap');
+
+      plot.select(".x.axis")
           .call($.x_axis);
 
-      $.plot.select(".y.axis")
+      plot.select(".y.axis")
           .call($.y_axis)
           .selectAll(".tick")
           .classed("tick-one", function(d) { return Math.abs(d-1) < 1e-6; });
@@ -227,7 +230,7 @@ function stocks(div) {
           .x(function(d) { return $.x(d.date) })
           .y(function(d) { return $.y(d[$.pre + curve]) });
 
-        $.plot.select("."+curve)
+        plot.select("."+curve)
           .datum($.data).transition().duration(1000)
           .attr("d", $[curve]);
       }
@@ -241,14 +244,14 @@ function stocks(div) {
           .y1(function(d) { return $.y(d[$.pre + "bollinger_upper"]) })
           .y0(function(d) { return $.y(d[$.pre + "bollinger_lower"]) });
 
-      $.plot.select(".bollinger")
+      plot.select(".bollinger")
           .datum($.data).transition().duration(1000)
           .attr("d", $.bollinger);
 
 
     // Affichage des valeurs
 
-      $.svg.select(".overlay")
+      plot.select(".overlay")
           .on("mousemove", show_price)
           .on("mouseover", function() { $.focus.style("display", null) })
           .on("mouseout", function() {
@@ -282,8 +285,9 @@ function stocks(div) {
 
     // Définition de la zone de travail
 
-      var wrap = d3.select(div)
+      var macd = d3.select(div)
           .append("svg")
+          .attr("class", "macd")
           .attr("width",  ($.width + 2 * $.margin))
           .attr("height", $.padding)
           .append("g")
@@ -292,23 +296,23 @@ function stocks(div) {
 
     // Définition des courbes
 
-      wrap.append("rect")
+      macd.append("rect")
           .attr("class", "positif")
           .attr("width", $.width)
           .attr("height", $.padding)
           .attr("clip-path", "url(#positif)");
 
-      wrap.append("rect")
+      macd.append("rect")
           .attr("class", "negatif")
           .attr("width", $.width)
           .attr("height", $.padding)
           .attr("clip-path", "url(#negatif)");
 
-      wrap.append("path")
+      macd.append("path")
           .attr("class", "macd")
           .style("clip-path", " url(#clip)");
 
-      wrap.append("path")
+      macd.append("path")
           .attr("class", 'signal')
           .style("clip-path", " url(#clip)");
 
@@ -323,7 +327,7 @@ function stocks(div) {
           .orient("left")
           .tickSize(-$.width, 0).ticks(4);
 
-      wrap.append("g")
+      macd.append("g")
           .attr("class", "y axis")
           .call($.y_macd_axis);
 
@@ -342,22 +346,22 @@ function stocks(div) {
           .x(function(d) { return $.x(d.date) })
           .y0($.y_macd(0));
 
-      wrap.datum($.data)
+      macd.datum($.data)
           .append("clipPath")
           .attr("id", "positif")
           .append("path")
           .attr("d", $.div.y1(function(d) {
             return Math.min($.y_macd(0), $.y_macd(1.5 * d.div)) }));
 
-      wrap.datum($.data)
+      macd.datum($.data)
           .append("clipPath")
           .attr("id", "negatif")
           .append("path")
           .attr("d", $.div.y1(function(d) {
             return Math.max($.y_macd(0), $.y_macd(1.5 * d.div)) }));
 
-      wrap.select(".macd").attr("d", $.macd);
-      wrap.select(".signal").attr("d", $.signal);
+      macd.select("path.macd").attr("d", $.macd);
+      macd.select("path.signal").attr("d", $.signal);
 
   }
 
@@ -366,12 +370,13 @@ function stocks(div) {
   // Affichage du sélecteur
   // ----------------------
 
-  this.draw_select = function(update) {
+  this.draw_zoom = function(update) {
 
     // Définition de la zone de travail
 
-      var wrap = d3.select(div)
+      var zoom = d3.select(div)
           .append("svg")
+          .attr("class", "zoom")
           .attr("width",  ($.width + 2 * $.margin))
           .attr("height", ($.top + $.padding + $.bottom))
           .append("g")
@@ -386,7 +391,7 @@ function stocks(div) {
 
     // Définition des courbes
 
-      wrap.append("path")
+      zoom.append("path")
           .attr("class", "area")
           .style("clip-path", " url(#clip)")
 
@@ -407,19 +412,19 @@ function stocks(div) {
       $.brush = d3.svg.brush()
           .x($.x_map);
 
-      wrap.append("g")
+      zoom.append("g")
           .attr("class", "x axis")
           .attr("transform", "translate(0," + $.padding + ")")
           .call($.x_axis);
 
-      wrap.append("g")
+      zoom.append("g")
           .attr("class", "x brush")
           .call($.brush)
           .selectAll("rect")
           .attr("height", $.padding );
 
 
-      wrap.select(".area")
+      zoom.select(".area")
           .datum($.data)
           .attr("d", $.map);
 
@@ -457,15 +462,16 @@ function stocks(div) {
                 .ticks(8));
           }
 
+          var plot = d3.select(".plot .wrap")
 
           for (var c in $.curves) {
-            $.plot.select("."+$.curves[c]).attr("d", $[$.curves[c]]);
+            plot.select("."+$.curves[c]).attr("d", $[$.curves[c]]);
           }
 
-          $.plot.select(".area").attr("d", $.price);
-          $.plot.select(".bollinger").attr("d", $.bollinger);
-          $.plot.select(".x.axis").call($.x_axis);
-          $.plot.select(".y.axis").call($.y_axis);
+          plot.select(".area").attr("d", $.price);
+          plot.select(".bollinger").attr("d", $.bollinger);
+          plot.select(".x.axis").call($.x_axis);
+          plot.select(".y.axis").call($.y_axis);
 
           d3.select("#positif path")
               .attr("d", $.div.y1(function(d) {
@@ -475,8 +481,8 @@ function stocks(div) {
               .attr("d", $.div.y1(function(d) {
                 return Math.max($.y_macd(0), $.y_macd(1.5 * d.div)) }));
 
-          d3.select(".macd").attr("d", $.macd);
-          d3.select(".signal").attr("d", $.signal);
+          d3.select(".macd .macd").attr("d", $.macd);
+          d3.select(".macd .signal").attr("d", $.signal);
 
           $.div = d3.svg.area()
               .x(function(d) { return $.x(d.date) })

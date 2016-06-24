@@ -86,12 +86,12 @@ path {
 
 /* Affichage du MACD */
 
-.macd {
+path.macd {
   stroke: lightcoral;
   stroke-opacity: 0.3;
 }
 
-.signal {
+path.signal {
   stroke: steelblue;
   stroke-opacity: 0.3;
 }
