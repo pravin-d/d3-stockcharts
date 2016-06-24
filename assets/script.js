@@ -23,9 +23,10 @@ function stocks(div) {
 
       $.width   = 760;
       $.height  = 350;
-      $.top     =  20;
-      $.bottom  =  20;
-      $.margin  =  40;
+      $.top     =  15;
+      $.bottom  =  40;
+      $.left    =  35;
+      $.right   =  20;
       $.padding = 100;
 
 
@@ -41,7 +42,7 @@ function stocks(div) {
       $.svg = d3.select(div)
           .append("svg")
           .attr("class", "plot")
-          .attr("width", $.width + 2 * $.margin)
+          .attr("width", $.width + $.left + $.right )
           .attr("height", $.height + $.top + $.bottom)
 
       $.svg.append("defs").append("clipPath")
@@ -52,7 +53,7 @@ function stocks(div) {
 
       $.plot = $.svg.append("g")
           .attr("class", "wrap")
-          .attr("transform", "translate(" + $.margin + "," + $.top + ")");
+          .attr("transform", "translate(" + $.left + "," + $.top + ")");
 
 
     // Créations des courbes
@@ -112,7 +113,7 @@ function stocks(div) {
 
     // Retour de l'ensemble avec une marge
 
-      var Δ = (max-min) * 0.1;
+      var Δ = (max-min) * 0.05;
       return [min - Δ, max + Δ];
   }
 
@@ -327,10 +328,10 @@ function stocks(div) {
       var zoom = d3.select(div)
           .append("svg")
           .attr("class", "zoom")
-          .attr("width",  ($.width + 2 * $.margin))
+          .attr("width",  ($.width + $.left + $.right ))
           .attr("height", ($.top + $.padding + $.bottom))
           .append("g")
-          .attr("transform", "translate(" + $.margin + ",0)");
+          .attr("transform", "translate(" + $.left + ",0)");
 
 
     // Définition des échelles
@@ -441,39 +442,87 @@ function stocks(div) {
   }
 
 
+
+  // Affichage du curseur et des données
+  // -----------------------------------
+
   this.show = function() {
+
+    // Création de la ligne
 
       $.focus = $.plot.append("g")
           .attr("class", "focus")
           .style("display", "none");
 
       $.focus.append("line")
-          .attr("y1", "0")
+          .attr("y1", 10)
           .attr("y2", 10 * $.height);
 
-      $.text = $.plot.append("g")
-          .style("text-anchor", "end")
-          .attr("transform", "translate(" + $.width + ",-5)")
-          .append("text")
-          .attr("class", "valeurs");
+
+    // Création des textes
+
+      var lgd_date = d3.select(div)
+          .insert("div",".stocks")
+          .attr("class", "lgd_date");
+
+      var lgd_plot = d3.select(div)
+          .insert("div",".stocks")
+          .attr("class", "lgd_plot")
+          .style("left", $.left + "px");
+
+      lgd_plot.append("span").attr("class", "lgd").text("Fermeture : ");
+
+      var lgd_price = lgd_plot.append("span")
+          .attr("class", "val lgd_price");
+
+      lgd_plot.append("span").attr("class", "lgd").text("EWMA12 : ");
+
+      var lgd_ewma12 = lgd_plot.append("span")
+          .attr("class", "val lgd_ewma12");
+
+      lgd_plot.append("span").attr("class", "lgd").text("EWMA26 : ");
+
+      var lgd_ewma26 = lgd_plot.append("span")
+          .attr("class", "val lgd_ewma26");
+
+      lgd_plot.append("span").attr("class", "lgd").text("Bollinger : ");
+
+      var lgd_bollinger = lgd_plot.append("span")
+          .attr("class", "val lgd_bollinger");
+
+      var lgd_macd = d3.select(div)
+          .insert("div",".stocks")
+          .attr("class", "lgd_macd")
+          .style("left", $.left + "px")
+          .style("top", $.top + $.height + $.bottom + "px");
+
+      lgd_macd.append("span").attr("class", "lgd").text("MACD : ")
+
+      var lgd_macd2 = lgd_macd.append("span")
+          .attr("class", "val lgd_macd2");
+
+      lgd_macd.append("span").attr("class", "lgd").text("Signal : ")
+
+      var lgd_signal = lgd_macd.append("span")
+          .attr("class", "val lgd_div");
+
+      lgd_macd.append("span").attr("class", "lgd").text("Divergence : ")
+
+      var lgd_div = lgd_macd.append("span")
+          .attr("class", "val lgd_div");
+
+      default_price();
+
+
+    // Affichage des valeurs dynamiquement
 
       $.plot.append("rect")
           .attr("class", "overlay")
           .attr("width", $.width)
-          .attr("height", 10 * $.height);
-
-    // Affichage des valeurs
-
-      $.plot.select(".overlay")
+          .attr("height", 10 * $.height)
           .on("mousemove", show_price)
-          .on("mouseover", function() { $.focus.style("display", null) })
-          .on("mouseout", function() {
-              $.focus.style("display", "none");
-              $.text.text("");
-            });
-
-
-    // Affichage du prix
+          .on("mouseout", default_price)
+          .on("mouseover", function() { $.focus.style("display", null) });
 
       function show_price() {
           var x0 = $.x.invert(d3.mouse(this)[0]),
@@ -483,7 +532,33 @@ function stocks(div) {
               d = x0 - d0.date > d1.date - x0 ? d1 : d0;
 
           $.focus.attr("transform", "translate("+$.x(d.date)+",0)");
-          $.text.text(fr_time(d.date) + ' – ' + fr_digit(d.price) + " €");
+          lgd_date.text(fr_time(d.date));
+          lgd_price.text(fr_digit(d.price));
+          lgd_ewma12.text(fr_digit(d.ewma12));
+          lgd_ewma26.text(fr_digit(d.ewma26));
+          lgd_bollinger.text(fr_digit(d.bollinger_upper)
+              + ' – ' + fr_digit(d.bollinger_lower));
+          lgd_macd2.text(fr_digit(d.macd));
+          lgd_signal.text(fr_digit(d.signal));
+          lgd_div.text(fr_digit(d.div));
+          lgd_div.attr("class", (d.div >= 0) ? "plus" : "minus");
+
+      }
+
+      function default_price() {
+          var last = $.data.slice(-1)[0]
+
+          $.focus.style("display", "none");
+          lgd_date.text(fr_time(last.date));
+          lgd_price.text(fr_digit(last.price));
+          lgd_ewma12.text(fr_digit(last.ewma12));
+          lgd_ewma26.text(fr_digit(last.ewma26));
+          lgd_bollinger.text(fr_digit(last.bollinger_upper)
+              + ' – ' + fr_digit(last.bollinger_lower));
+          lgd_macd2.text(fr_digit(last.macd));
+          lgd_signal.text(fr_digit(last.signal));
+          lgd_div.text(fr_digit(last.div));
+          lgd_div.attr("class", (last.div >= 0) ? "plus" : "minus");
       }
 
   }

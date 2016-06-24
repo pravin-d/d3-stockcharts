@@ -1,11 +1,13 @@
 body {
   font-family: PT Sans, sans-serif;
-  width: 900px;
+  width: 875px;
   margin: 3em auto 1em;
 }
 
 #stocks {
+  position: relative;
   border: 30px #f3f3f3 solid;
+  font-size: 0.75em;
 }
 
 h1 {
@@ -20,7 +22,6 @@ h1 {
 
 #stocks svg {
   display: block;
-  font-size: 0.75em;
 }
 
 .area {
@@ -42,26 +43,91 @@ path {
   stroke: #777;
 }
 
+
+
+/* Courbes du graphique principal */
+
 .plot path.price {
   stroke-width: 1.5px;
 }
 
+.lgd_price {
+  border-bottom: 1px solid #777;
+}
+
 .plot path.ewma12 {
-  stroke: lightcoral;
-  stroke-opacity: 0.3;
+  stroke: rgb(240, 128, 128);
+  stroke-opacity: 0.7;
+}
+
+.lgd_ewma12 {
+  border-bottom: 1px solid rgba(240, 128, 128, 0.7);
 }
 
 .plot path.ewma26 {
-  stroke: steelblue;
-  stroke-opacity: 0.3;
+  stroke: rgb(70, 130, 180);
+  stroke-opacity: 0.5;
 }
 
+.lgd_ewma26 {
+  border-bottom: 1px solid rgba(70, 130, 180, 0.5);
+}
 
 .plot .bollinger {
   fill: black;
   fill-opacity: 0.06;
   stroke: none;
 }
+
+.lgd_bollinger {
+  background-color: rgba(0,0,0, 0.06);
+}
+
+
+/* Courbes du module MACD */
+
+path.macd {
+  stroke: rgb(240, 128, 128);
+  stroke-opacity: 0.3;
+}
+
+.lgd_macd2 {
+  border-bottom: 1px solid rgba(240, 128, 128, 0.5);
+}
+
+path.signal {
+  stroke: rgb(70, 130, 180);
+  stroke-opacity: 0.3;
+}
+
+.lgd_signal {
+  border-bottom: 1px solid rgba(70, 130, 180, 0.5);
+}
+
+.positif {
+  fill: rgb(0, 128, 0) ;
+  fill-opacity: 0.7;
+  stroke: none;
+}
+
+.lgd_macd .plus {
+  color: rgba(0, 128, 0, 0.5);
+}
+
+.negatif {
+  fill: rgb(178, 34, 34);
+  fill-opacity: 0.7;
+  stroke: none;
+}
+
+.lgd_macd .minus {
+  color: rgba(178, 34, 34, 0.5);
+}
+
+
+
+
+
 
 .brush .extent {
   stroke: #bbb;
@@ -82,32 +148,34 @@ path {
   stroke-opacity: 0.2;
 }
 
-.valeurs {
-  fill: #777;
+
+/* Textes */
+
+#stocks div {
+  position: absolute;
+  font-size: 1.05em;
+  color: #AAA;
+}
+
+.lgd {
+  margin: 0 5px 0 15px;
+  font-weight: bold;
+  display: inline-block;
+}
+
+.val {
+  color: #888;
+}
+
+.lgd_date {
+  top: 5px;
+  right: 0;
+  margin-right: 20px;
+}
+
+.lgd_plot, .lgd_macd {
+  top: 5px;
 }
 
 
 
-/* Affichage du MACD */
-
-path.macd {
-  stroke: lightcoral;
-  stroke-opacity: 0.3;
-}
-
-path.signal {
-  stroke: steelblue;
-  stroke-opacity: 0.3;
-}
-
-.positif {
-  fill: green;
-  fill-opacity: 0.7;
-  stroke: none;
-}
-
-.negatif {
-  fill: firebrick;
-  fill-opacity: 0.7;
-  stroke: none;
-}
