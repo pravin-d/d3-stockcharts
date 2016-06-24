@@ -1,7 +1,11 @@
 body {
   font-family: PT Sans, sans-serif;
-  width: 800px;
+  width: 900px;
   margin: 3em auto 1em;
+}
+
+.stocks {
+  border: 30px #f3f3f3 solid;
 }
 
 h1 {
