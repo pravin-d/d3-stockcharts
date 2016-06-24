@@ -17,7 +17,6 @@ function stocks(div) {
     // Données à afficher sur le graphique
 
       $.curves = ["ewma12", "ewma26", "price"];
-      $.variables = $.curves.concat(["bollinger_lower", "bollinger_upper"]);
 
 
     // Modèles de boîtes
@@ -185,31 +184,28 @@ function stocks(div) {
   // -----------------------
 
   this.compute_ratio = function(base) {
-
-    for (var c in $.variables) {
-        $.data.forEach(function(d) {
-          d['ratio_' + $.variables[c]] = d[$.variables[c]] / base;
-        });
-      }
+    $.data.forEach(function(d) {
+        for (var stat in d) {
+          if (stat != 'date' && stat.indexOf("ratio_") < 0 ) {
+            d['ratio_' + stat] = d[stat] / base;
+          }
+        }
+      });
   }
 
 
 
-  // Importation des données en JSON
-  // -------------------------------
+  // Lecture des données
+  // -------------------
 
   this.read = function(err, data) {
-
-    // Lecture des données
-
       data.forEach(function(d) {
-          d.price = +d.price;
           d.date = d3.time.format('%Y-%m-%d').parse(d.date);
-          d.ewma12 = +d.ewma12;
-          d.ewma26 = +d.ewma26;
-          d.bollinger_upper = +d.bollinger_upper;
-          d.bollinger_lower = +d.bollinger_lower;
-          d.macd = +d.macd;
+          for (var stat in d) {
+            if (stat != 'date') {
+              d[stat] = +d[stat];
+            }
+          }
         });
 
       $.data = data;
