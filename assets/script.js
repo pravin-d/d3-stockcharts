@@ -26,7 +26,7 @@ function stocks(div) {
       $.padding =  40;
       $.top     =  20;
       $.right   =  10;
-      $.bottom  =  80;
+      $.bottom  = 100;
       $.left    =  40;
 
 
@@ -35,19 +35,15 @@ function stocks(div) {
       $.x  = d3.time.scale().range([0, $.width]);
       $.x2 = d3.time.scale().range([0, $.width]);
       $.y2 = d3.scale.linear().range([$.bottom, 0]);
-      $.y3 = d3.scale.linear().range([$.bottom, 0]);
 
       $.x_axis = d3.svg.axis().scale($.x)
           .orient("bottom").tickFormat(fr_axis);
-
-      $.y3_axis = d3.svg.axis().scale($.y3)
-          .orient("left").tickSize(-$.width, 0).ticks(4);
 
     // Création de l'espace de travail
 
       $.svg = d3.select(div).append("svg")
           .attr("width", $.width + $.left + $.right)
-          .attr("height", $.height + $.top + 2 * $.padding + 2 * $.bottom);
+          .attr("height", $.height + $.top + $.padding + $.bottom);
 
       $.svg.append("defs").append("clipPath")
           .attr("id", "clip")
@@ -59,14 +55,8 @@ function stocks(div) {
           .attr("class", "plot")
           .attr("transform", "translate(" + $.left + "," + $.top + ")");
 
-      $.tool = $.svg.append("g")
-          .attr("class", "tool")
-          .attr("transform", "translate(" + $.left + "," +
-            ($.top + $.height + $.padding * 3 / 4) + ")");
-
       $.zoom = $.svg.append("g")
-          .attr("transform", "translate(" + $.left + "," +
-              ($.height + 2 * $.padding + $.bottom) + ")");
+          .attr("transform", "translate(" + $.left + "," + ($.height + $.padding) + ")");
 
 
     // Créations des courbes
@@ -110,9 +100,6 @@ function stocks(div) {
           .attr("class", "x axis")
           .attr("transform", "translate(0,"+$.height+")");
 
-      $.tool.append("g")
-          .attr("class", "y axis");
-
       $.zoom.append("g")
           .attr("class", "x axis")
           .attr("transform", "translate(0,"+$.bottom+")");
@@ -126,7 +113,7 @@ function stocks(div) {
 
       $.focus.append("line")
           .attr("y1", "0")
-          .attr("y2", ($.height + $.padding + $.bottom ))
+          .attr("y2", $.height)
           .attr("transform", "translate("+$.left+","+$.top+")");
 
       $.text = $.plot.append("g")
@@ -138,7 +125,7 @@ function stocks(div) {
       $.svg.append("rect")
           .attr("class", "overlay")
           .attr("width", $.width)
-          .attr("height", $.height + $.padding + $.bottom)
+          .attr("height", $.height)
           .attr("transform", "translate("+$.left+","+$.top+")");
   }
 
@@ -147,7 +134,7 @@ function stocks(div) {
   // Calcul de l'ensemble d'arrivée
   // ------------------------------
 
-  this.compute_domain = function(data, key, ext) {
+  this.compute_domain = function(key, ext) {
 
       function val(d, value) {
         return (d.date >= ext[0] && d.date <= ext[1]) ? d[key] : value;
@@ -157,17 +144,17 @@ function stocks(div) {
     // Calcul sur l'ensemble des valeurs
 
       if (ext === undefined) {
-        var min = d3.min(data.map(function(d) { return d[key] })),
-            max = d3.max(data.map(function(d) { return d[key] }));
+        var min = d3.min($.data.map(function(d) { return d[key] })),
+            max = d3.max($.data.map(function(d) { return d[key] }));
       }
 
 
     // Calcul sur une plage donnée
 
       else {
-        var dom = $.compute_domain(data, key),
-            min = d3.min(data.map(function(d) { return val(d, dom[1]) })),
-            max = d3.max(data.map(function(d) { return val(d, dom[0]) })),
+        var dom = $.compute_domain(key),
+            min = d3.min($.data.map(function(d) { return val(d, dom[1]) })),
+            max = d3.max($.data.map(function(d) { return val(d, dom[0]) })),
             min = (4 * min + dom[0])/5,
             max = (4 * max + dom[1])/5;
       }
@@ -211,7 +198,7 @@ function stocks(div) {
 
       $.data = data;
       $.draw();
-
+      $.draw_macd();
   }
 
 
@@ -238,13 +225,11 @@ function stocks(div) {
       $.x.domain(d3.extent($.data.map(function(d) { return d.date })));
 
       $.y  = d3.scale.linear().range([$.height, 0]);
-      $.y.domain($.compute_domain($.data, "price"));
+      $.y.domain($.compute_domain("price"));
       $.y_axis = d3.svg.axis().scale($.y).orient("left").tickSize(-$.width, 0);
 
       $.x2.domain($.x.domain());
       $.y2.domain($.y.domain());
-
-      $.y3.domain($.compute_domain($.data, "Δmacd"));
 
       if (type == "relative") {
         var percent = function(x) { return d3.format("+.0%")(x - 1); };
@@ -255,7 +240,7 @@ function stocks(div) {
             .orient("left")
             .tickSize(-$.width, 0)
             .tickFormat(percent);
-        $.y.domain($.compute_domain($.data, "ratio_price"));
+        $.y.domain($.compute_domain("ratio_price"));
         $.y_axis.tickValues(d3.scale.linear().domain($.y.domain()).ticks(8));
 
       }
@@ -270,9 +255,6 @@ function stocks(div) {
           .call($.y_axis)
            .selectAll(".tick")
            .classed("tick-one", function(d) { return Math.abs(d-1) < 1e-6; });
-
-      $.tool.select(".y.axis")
-          .call($.y3_axis);
 
       $.zoom.select(".x.axis")
           .call($.x_axis);
@@ -308,36 +290,6 @@ function stocks(div) {
       $.plot.select(".bollinger")
           .datum($.data).transition().duration(1000)
           .attr("d", $.bollinger);
-
-      $.Δmacd = d3.svg.area()
-          .x(function(d) { return $.x(d.date) })
-          .y0($.y3(0));
-
-      $.svg.datum($.data)
-          .append("clipPath")
-          .attr("id", "clip-below")
-          .append("path")
-          .attr("d", $.Δmacd.y1(function(d) {
-            return Math.min($.y3(0), $.y3(d.Δmacd)) }));
-
-      $.svg.datum($.data)
-          .append("clipPath")
-          .attr("id", "clip-above")
-          .append("path")
-          .attr("d", $.Δmacd.y1(function(d) {
-            return Math.max($.y3(0), $.y3(d.Δmacd)) }));
-
-      $.tool.append("rect")
-          .attr("class", "macd below")
-          .attr("width", $.width)
-          .attr("height", $.bottom)
-          .attr("clip-path", "url(#clip-below)");
-
-      $.tool.append("rect")
-          .attr("class", "macd above")
-          .attr("width", $.width)
-          .attr("height", $.bottom)
-          .attr("clip-path", "url(#clip-above)");
 
       $.zoom.select(".area")
           .datum($.data)
@@ -387,12 +339,12 @@ function stocks(div) {
 
           if (!$.brush.empty()) {
               $.x.domain($.brush.empty() ? $.x2.domain() : $.brush.extent());
-              $.y.domain($.compute_domain($.data, pre + "price", ext));
+              $.y.domain($.compute_domain(pre + "price", ext));
           }
 
           else {
             $.x.domain(d3.extent($.data.map(function(d) { return d.date })));
-            $.y.domain($.compute_domain($.data, pre + "price"));
+            $.y.domain($.compute_domain(pre + "price"));
           }
 
           if (type == "relative") {
@@ -411,19 +363,113 @@ function stocks(div) {
           $.plot.select(".x.axis").call($.x_axis);
           $.plot.select(".y.axis").call($.y_axis);
 
-          $.svg.select("#clip-below path")
-              .attr("d", $.Δmacd.y1(function(d) {
-                return Math.min($.y3(0), $.y3(d.Δmacd)) }));
+          d3.select("#positif path")
+              .attr("d", $.div.y1(function(d) {
+                return Math.min($.y_macd(0), $.y_macd(d.div)) }));
 
-          $.svg.select("#clip-above path")
-              .attr("d", $.Δmacd.y1(function(d) {
-                return Math.max($.y3(0), $.y3(d.Δmacd)) }));
+          d3.select("#negatif path")
+              .attr("d", $.div.y1(function(d) {
+                return Math.max($.y_macd(0), $.y_macd(d.div)) }));
 
-          $.Δmacd = d3.svg.area()
+          d3.select(".macd").attr("d", $.macd);
+          d3.select(".signal").attr("d", $.signal);
+
+          $.div = d3.svg.area()
               .x(function(d) { return $.x(d.date) })
-              .y0($.y3(0));
+              .y0($.y_macd(0));
 
       });
+  }
+
+
+
+  // Affichage du MACD
+  // -----------------
+
+  this.draw_macd = function(update) {
+
+    // Définition de la zone de travail
+
+      var wrap = d3.select(div)
+          .append("svg")
+          .attr("width",  ($.left + $.width + $.right))
+          .attr("height", ($.bottom))
+          .append("g")
+          .attr("transform", "translate(" + $.left + ",0)");
+
+
+    // Définition des courbes
+
+      wrap.append("rect")
+          .attr("class", "positif")
+          .attr("width", $.width)
+          .attr("height", $.bottom)
+          .attr("clip-path", "url(#positif)");
+
+      wrap.append("rect")
+          .attr("class", "negatif")
+          .attr("width", $.width)
+          .attr("height", $.bottom)
+          .attr("clip-path", "url(#negatif)");
+
+      wrap.append("path")
+          .attr("class", "macd")
+          .style("clip-path", " url(#clip)");
+
+      wrap.append("path")
+          .attr("class", 'signal')
+          .style("clip-path", " url(#clip)");
+
+
+    // Définition des axes
+
+      $.y_div = d3.scale.linear().range([$.bottom, 0]);
+      $.y_div.domain($.compute_domain("div"));
+
+      $.y_macd = d3.scale.linear().range([$.bottom, 0]);
+      $.y_macd.domain($.compute_domain("macd"));
+
+      $.y_macd_axis = d3.svg.axis()
+          .scale($.y_macd)
+          .orient("left")
+          .tickSize(-$.width, 0).ticks(4);
+
+      wrap.append("g")
+          .attr("class", "y axis")
+          .call($.y_macd_axis);
+
+
+      // Affichage des courbes
+
+      $.macd = d3.svg.line()
+        .x(function(d) { return $.x(d.date) })
+        .y(function(d) { return $.y_macd(d.macd) });
+
+      $.signal = d3.svg.line()
+        .x(function(d) { return $.x(d.date) })
+        .y(function(d) { return $.y_macd(d.signal) });
+
+      $.div = d3.svg.area()
+          .x(function(d) { return $.x(d.date) })
+          .y0($.y_div(0));
+
+      wrap.datum($.data)
+          .append("clipPath")
+          .attr("id", "positif")
+          .append("path")
+          .attr("d", $.div.y1(function(d) {
+            return Math.min($.y_div(0), $.y_div(d.div)) }));
+
+      wrap.datum($.data)
+          .append("clipPath")
+          .attr("id", "negatif")
+          .append("path")
+          .attr("d", $.div.y1(function(d) {
+            return Math.max($.y_div(0), $.y_div(d.div)) }));
+
+      wrap.select(".macd").attr("d", $.macd);
+      wrap.select(".signal").attr("d", $.signal);
+
   }
 
 
