@@ -28,10 +28,14 @@ svg {
   stroke: #777;
 }
 
-.plot path {
+.plot path, .tool path {
   fill: none;
   stroke: black;
   stroke-opacity: 0.4;;
+}
+
+.plot path.price {
+  stroke-width: 1.5px;
 }
 
 .plot path.ewma12 {
@@ -48,14 +52,25 @@ svg {
 .plot .bollinger {
   fill: black;
   fill-opacity: 0.06;
-  stroke: none;;
+  stroke: none;
+}
+
+.macd.below {
+  fill: green;
+  fill-opacity: 0.7;
+  stroke: none;
+}
+
+.macd.above {
+  fill: firebrick;
+  fill-opacity: 0.7;
+  stroke: none;
 }
 
 .brush .extent {
   stroke: #bbb;
   fill-opacity: .125;
 }
-
 
 .axis.y .tick:not(.tick-one) line {
   stroke-opacity: .1;

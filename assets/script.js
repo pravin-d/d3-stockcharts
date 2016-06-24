@@ -77,10 +77,6 @@ function stocks(div) {
           .attr("class", "bollinger")
           .style("clip-path", " url(#clip)")
 
-      $.tool.append("path")
-          .attr("class", "macd")
-          .style("clip-path", " url(#clip)")
-
 
     // Création du sélecteur
 
@@ -243,7 +239,7 @@ function stocks(div) {
       $.x2.domain($.x.domain());
       $.y2.domain($.y.domain());
 
-      $.y3.domain($.compute_domain($.data, "macd"));
+      $.y3.domain($.compute_domain($.data, "Δmacd"));
 
       if (type == "relative") {
         var percent = function(x) { return d3.format("+.0%")(x - 1); };
@@ -300,21 +296,43 @@ function stocks(div) {
       }
 
       $.bollinger = d3.svg.area()
-        .x(function(d) { return $.x(d.date) })
-        .y1(function(d) { return $.y(d[pre + "bollinger_upper"]) })
-        .y0(function(d) { return $.y(d[pre + "bollinger_lower"]) });
+          .x(function(d) { return $.x(d.date) })
+          .y1(function(d) { return $.y(d[pre + "bollinger_upper"]) })
+          .y0(function(d) { return $.y(d[pre + "bollinger_lower"]) });
 
       $.plot.select(".bollinger")
-        .datum($.data).transition().duration(1000)
-        .attr("d", $.bollinger);
+          .datum($.data).transition().duration(1000)
+          .attr("d", $.bollinger);
 
-      $.macd = d3.svg.line()
-        .x(function(d) { return $.x(d.date) })
-        .y(function(d) { return $.y3(d.macd) });
+      $.Δmacd = d3.svg.area()
+          .x(function(d) { return $.x(d.date) })
+          .y0($.y3(0));
 
-      $.tool.select(".macd")
-        .datum($.data)
-        .attr("d", $.macd);
+      $.svg.datum($.data)
+          .append("clipPath")
+          .attr("id", "clip-below")
+          .append("path")
+          .attr("d", $.Δmacd.y1(function(d) {
+            return Math.min($.y3(0), $.y3(d.Δmacd)) }));
+
+      $.svg.datum($.data)
+          .append("clipPath")
+          .attr("id", "clip-above")
+          .append("path")
+          .attr("d", $.Δmacd.y1(function(d) {
+            return Math.max($.y3(0), $.y3(d.Δmacd)) }));
+
+      $.tool.append("rect")
+          .attr("class", "macd below")
+          .attr("width", $.width)
+          .attr("height", $.bottom)
+          .attr("clip-path", "url(#clip-below)");
+
+      $.tool.append("rect")
+          .attr("class", "macd above")
+          .attr("width", $.width)
+          .attr("height", $.bottom)
+          .attr("clip-path", "url(#clip-above)");
 
       $.zoom.select(".area")
           .datum($.data)
@@ -383,12 +401,22 @@ function stocks(div) {
             $.plot.select("."+$.curves[c]).attr("d", $[$.curves[c]]);
           }
 
-          $.tool.select(".macd").attr("d", $.macd);
-
           $.plot.select(".area").attr("d", $.price);
           $.plot.select(".bollinger").attr("d", $.bollinger);
           $.plot.select(".x.axis").call($.x_axis);
           $.plot.select(".y.axis").call($.y_axis);
+
+          $.svg.select("#clip-below path")
+              .attr("d", $.Δmacd.y1(function(d) {
+                return Math.min($.y3(0), $.y3(d.Δmacd)) }));
+
+          $.svg.select("#clip-above path")
+              .attr("d", $.Δmacd.y1(function(d) {
+                return Math.max($.y3(0), $.y3(d.Δmacd)) }));
+
+          $.Δmacd = d3.svg.area()
+              .x(function(d) { return $.x(d.date) })
+              .y0($.y3(0));
 
       });
   }
