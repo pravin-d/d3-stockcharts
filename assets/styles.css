@@ -81,9 +81,9 @@ svg {
   pointer-events: all;
 }
 
-.focus circle {
-  fill: none;
-  stroke: red;
+.focus line {
+  stroke: black;
+  stroke-opacity: 0.2;
 }
 
 .valeurs {

@@ -36,8 +36,12 @@ function stocks(div) {
       $.x2 = d3.time.scale().range([0, $.width]);
       $.y2 = d3.scale.linear().range([$.bottom, 0]);
       $.y3 = d3.scale.linear().range([$.bottom, 0]);
-      $.x_axis = d3.svg.axis().scale($.x).orient("bottom").tickFormat(fr_axis);
-      $.y3_axis = d3.svg.axis().scale($.y3).orient("left").tickSize(-$.width, 0).ticks(5);
+
+      $.x_axis = d3.svg.axis().scale($.x)
+          .orient("bottom").tickFormat(fr_axis);
+
+      $.y3_axis = d3.svg.axis().scale($.y3)
+          .orient("left").tickSize(-$.width, 0).ticks(4);
 
     // Création de l'espace de travail
 
@@ -120,8 +124,9 @@ function stocks(div) {
           .attr("class", "focus")
           .style("display", "none");
 
-      $.focus.append("circle")
-          .attr("r", 2.5)
+      $.focus.append("line")
+          .attr("y1", "0")
+          .attr("y2", ($.height + $.padding + $.bottom ))
           .attr("transform", "translate("+$.left+","+$.top+")");
 
       $.text = $.plot.append("g")
@@ -359,7 +364,7 @@ function stocks(div) {
               d1 = $.data[i],
               d = x0 - d0.date > d1.date - x0 ? d1 : d0;
 
-          $.focus.attr("transform", "translate("+$.x(d.date)+","+$.y(d.price)+")");
+          $.focus.attr("transform", "translate("+$.x(d.date)+",0)");
           $.text.text(fr_time(d.date) + ' – ' + fr_digit(d.price) + " €");
       }
 
