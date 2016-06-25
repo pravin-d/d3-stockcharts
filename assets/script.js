@@ -329,7 +329,7 @@ function stocks(div) {
           .append("svg")
           .attr("class", "zoom")
           .attr("width",  ($.width + $.left + $.right ))
-          .attr("height", ($.top + $.padding + $.bottom))
+          .attr("height", ($.padding + $.bottom))
           .append("g")
           .attr("transform", "translate(" + $.left + ",0)");
 
@@ -355,7 +355,6 @@ function stocks(div) {
     // Définition du sélecteur
 
       $.map = d3.svg.area()
-          .interpolate("monotone")
           .x(function(d) { return $.x_map(d.date) })
           .y1(function(d) { return $.y_map(d.price) })
           .y0($.padding);
@@ -461,6 +460,8 @@ function stocks(div) {
 
     // Création des textes
 
+      var lgd = {}
+
       var lgd_date = d3.select(div)
           .insert("div",".stocks")
           .attr("class", "lgd_date");
@@ -470,49 +471,26 @@ function stocks(div) {
           .attr("class", "lgd_plot")
           .style("left", $.left + "px");
 
-      lgd_plot.append("span").attr("class", "lgd").text("Fermeture : ");
-
-      var lgd_price = lgd_plot.append("span")
-          .attr("class", "val lgd_price");
-
-      lgd_plot.append("span").attr("class", "lgd").text("EWMA12 : ");
-
-      var lgd_ewma12 = lgd_plot.append("span")
-          .attr("class", "val lgd_ewma12");
-
-      lgd_plot.append("span").attr("class", "lgd").text("EWMA26 : ");
-
-      var lgd_ewma26 = lgd_plot.append("span")
-          .attr("class", "val lgd_ewma26");
-
-      lgd_plot.append("span").attr("class", "lgd").text("Bollinger : ");
-
-      var lgd_bollinger = lgd_plot.append("span")
-          .attr("class", "val lgd_bollinger");
-
-      var lgd_macd = d3.select(div)
+      var lgd_ma = d3.select(div)
           .insert("div",".stocks")
-          .attr("class", "lgd_macd")
+          .attr("class", "lgd_ma")
           .style("left", $.left + "px")
           .style("top", $.top + $.height + $.bottom + "px");
 
-      lgd_macd.append("span").attr("class", "lgd").text("MACD : ")
+      write_legend("price", "Fermeture", lgd_plot);
+      var lgd_diff = lgd_plot.append("span").attr("class", "val");
+      write_legend("ewma12", "EWMA12", lgd_plot);
+      write_legend("ewma26", "EWMA26", lgd_plot);
+      write_legend("bollinger", "Bollinger", lgd_plot);
 
-      var lgd_macd2 = lgd_macd.append("span")
-          .attr("class", "val lgd_macd2");
+      write_legend("macd", "MACD", lgd_ma);
+      write_legend("signal", "Signal", lgd_ma);
+      write_legend("div", "Divergence", lgd_ma);
 
-      lgd_macd.append("span").attr("class", "lgd").text("Signal : ")
-
-      var lgd_signal = lgd_macd.append("span")
-          .attr("class", "val lgd_div");
-
-      lgd_macd.append("span").attr("class", "lgd").text("Divergence : ")
-
-      var lgd_div = lgd_macd.append("span")
-          .attr("class", "val lgd_div");
-
-      default_price();
-
+      function write_legend(name, title, legend) {
+        legend.append("span").attr("class", "lgd").text(title + " : ");
+        lgd[name] = legend.append("span").attr("class", "val lgd_" + name);
+      }
 
     // Affichage des valeurs dynamiquement
 
@@ -520,45 +498,53 @@ function stocks(div) {
           .attr("class", "overlay")
           .attr("width", $.width)
           .attr("height", 10 * $.height)
-          .on("mousemove", show_price)
-          .on("mouseout", default_price)
-          .on("mouseover", function() { $.focus.style("display", null) });
 
-      function show_price() {
-          var x0 = $.x.invert(d3.mouse(this)[0]),
-              i = d3.bisector(function(d){return d.date}).left($.data, x0, 1),
-              d0 = $.data[i - 1],
-              d1 = (!$.data[i] ? $.data[i- 1] : $.data[i]),
-              d = x0 - d0.date > d1.date - x0 ? d1 : d0;
+      default_legends();
 
-          $.focus.attr("transform", "translate("+$.x(d.date)+",0)");
-          lgd_date.text(fr_time(d.date));
-          lgd_price.text(fr_digit(d.price));
-          lgd_ewma12.text(fr_digit(d.ewma12));
-          lgd_ewma26.text(fr_digit(d.ewma26));
-          lgd_bollinger.text(fr_digit(d.bollinger_upper)
-              + ' – ' + fr_digit(d.bollinger_lower));
-          lgd_macd2.text(fr_digit(d.macd));
-          lgd_signal.text(fr_digit(d.signal));
-          lgd_div.text(fr_digit(d.div));
-          lgd_div.attr("class", (d.div >= 0) ? "plus" : "minus");
+      d3.selectAll(".overlay," + div + " div")
+          .on("mouseout", default_legends)
+          .on("mousemove", function () {
+              var x0 = $.x.invert(d3.mouse(this)[0]),
+                  i = d3.bisector(function(d){return d.date})
+                      .left($.data, x0, 1),
+                  d0 = $.data[i - 1],
+                  d1 = (!$.data[i] ? $.data[i- 1] : $.data[i]),
+                  test = (x0 - d0.date > d1.date - x0),
+                  d = test ? d1 : d0;
 
+              $.focus.attr("transform", "translate("+$.x(d.date)+",0)");
+
+              update_legends(d, test ? d0 : $.data[i - 2])
+            })
+          .on("mouseover", function() {
+              $.focus.style("display", null)
+            });
+
+      function default_legends() {
+        $.focus.style("display", "none");
+        update_legends($.data.slice(-1)[0], $.data.slice(-2)[0]);
       }
 
-      function default_price() {
-          var last = $.data.slice(-1)[0]
+      function update_legends(d, y) {
 
-          $.focus.style("display", "none");
-          lgd_date.text(fr_time(last.date));
-          lgd_price.text(fr_digit(last.price));
-          lgd_ewma12.text(fr_digit(last.ewma12));
-          lgd_ewma26.text(fr_digit(last.ewma26));
-          lgd_bollinger.text(fr_digit(last.bollinger_upper)
-              + ' – ' + fr_digit(last.bollinger_lower));
-          lgd_macd2.text(fr_digit(last.macd));
-          lgd_signal.text(fr_digit(last.signal));
-          lgd_div.text(fr_digit(last.div));
-          lgd_div.attr("class", (last.div >= 0) ? "plus" : "minus");
+          var evol = (d.price - y.price) / y.price * 100,
+              evols = evol > 0 ? '▲ ' : '▼ ';
+
+          lgd_date.text(fr_time(d.date));
+          lgd['price'].text(fr_digit(d.price));
+
+          lgd_diff.text(evols + fr_digit(evol).replace('-','')+" %");
+          lgd_diff.attr("class", (evol >= 0) ? "val plus" : "val minus");
+
+          lgd['ewma12'].text(fr_digit(d.ewma12));
+          lgd['ewma26'].text(fr_digit(d.ewma26));
+          lgd['bollinger'].text(fr_digit(d.bollinger_upper)
+              + ' – ' + fr_digit(d.bollinger_lower));
+
+          lgd['macd'].text(fr_digit(d.macd));
+          lgd['signal'].text(fr_digit(d.signal));
+          lgd['div'].text(fr_digit(d.div));
+          lgd['div'].attr("class", (d.div >= 0) ? "val plus" : "val minus");
       }
 
   }
