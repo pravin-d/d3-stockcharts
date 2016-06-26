@@ -348,8 +348,8 @@ function stocks(div) {
 
     // Définition des échelles
 
-      $.x_map = d3.time.scale().range([0, $.width]);
-      $.y_map = d3.scale.linear().range([$.padding, 0]);
+      var x_zoom = d3.time.scale().range([0, $.width]);
+      var y_zoom = d3.scale.linear().range([$.padding, 0]);
 
 
     // Définition des courbes
@@ -361,18 +361,13 @@ function stocks(div) {
 
     // Calcul des axes
 
-      $.x_map.domain($.x.domain());
-      $.y_map.domain($.y.domain());
+      x_zoom.domain($.x.domain());
+      y_zoom.domain($.y.domain());
 
     // Définition du sélecteur
 
-      $.map = d3.svg.area()
-          .x(function(d) { return $.x_map(d.date) })
-          .y1(function(d) { return $.y_map(d.price) })
-          .y0($.padding);
-
-      $.brush = d3.svg.brush()
-          .x($.x_map);
+      var brush = d3.svg.brush()
+          .x(x_zoom);
 
       zoom.append("g")
           .attr("class", "x axis")
@@ -381,21 +376,24 @@ function stocks(div) {
 
       zoom.append("g")
           .attr("class", "x brush")
-          .call($.brush)
+          .call(brush)
           .selectAll("rect")
           .attr("height", $.padding );
 
 
       zoom.select(".area")
           .datum($.data)
-          .attr("d", $.map);
+          .attr("d", d3.svg.area()
+              .x(function(d) { return x_zoom(d.date) })
+              .y1(function(d) { return y_zoom(d.price) })
+              .y0($.padding));
 
 
     // Zoom sur la sélection
 
 
-      $.brush.on("brush", function () {
-          var ext = $.brush.extent();
+      brush.on("brush", function () {
+          var ext = brush.extent();
 
           if ($.type == "relative") {
 
@@ -408,8 +406,8 @@ function stocks(div) {
 
           }
 
-          if (!$.brush.empty()) {
-              $.x.domain($.brush.empty() ? $.x_map.domain() : $.brush.extent());
+          if (!brush.empty()) {
+              $.x.domain(brush.empty() ? x_zoom.domain() : brush.extent());
               $.y.domain($.compute_domain($.pre + "price", ext));
           }
 
@@ -454,8 +452,8 @@ function stocks(div) {
 
 
 
-  // Affichage du curseur et des données
-  // -----------------------------------
+  // Affichage du curseur et des valeurs au survol
+  // ---------------------------------------------
 
   this.show = function() {
 
