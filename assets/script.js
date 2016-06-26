@@ -134,6 +134,18 @@ function stocks(div) {
 
 
 
+  // Chargement des données
+  // ----------------------
+
+
+  this.load = function() {
+    var isin = window.location.search.replace("?", "")
+    if (isin) {
+        d3.csv('data/isin/' + isin + '.csv', graph.read)
+    }
+  }
+
+
   // Lecture des données
   // -------------------
 
