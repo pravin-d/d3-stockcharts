@@ -23,9 +23,9 @@ function stocks(div) {
 
       $.width   = 760;
       $.height  = 350;
-      $.top     =  15;
+      $.top     =  25;
       $.bottom  =  40;
-      $.left    =  35;
+      $.left    =  40;
       $.right   =  20;
       $.padding = 100;
 
@@ -82,58 +82,6 @@ function stocks(div) {
 
 
 
-  // Calcul de l'ensemble d'arrivée
-  // ------------------------------
-
-  this.compute_domain = function(key, ext) {
-
-      function val(d, value) {
-        return (d.date >= ext[0] && d.date <= ext[1]) ? d[key] : value;
-      }
-
-
-    // Calcul sur l'ensemble des valeurs
-
-      if (ext === undefined) {
-        var min = d3.min($.data.map(function(d) { return d[key] })),
-            max = d3.max($.data.map(function(d) { return d[key] }));
-      }
-
-
-    // Calcul sur une plage donnée
-
-      else {
-        var dom = $.compute_domain(key),
-            min = d3.min($.data.map(function(d) { return val(d, dom[1]) })),
-            max = d3.max($.data.map(function(d) { return val(d, dom[0]) })),
-            min = (4 * min + dom[0])/5,
-            max = (4 * max + dom[1])/5;
-      }
-
-
-    // Retour de l'ensemble avec une marge
-
-      var Δ = (max-min) * 0.05;
-      return [min - Δ, max + Δ];
-  }
-
-
-
-  // Calcul des pourcentages
-  // -----------------------
-
-  this.compute_ratio = function(base) {
-    $.data.forEach(function(d) {
-        for (var stat in d) {
-          if (stat != 'date' && stat.indexOf("ratio_") < 0 ) {
-            d['ratio_' + stat] = d[stat] / base;
-          }
-        }
-      });
-  }
-
-
-
   // Chargement des données
   // ----------------------
 
@@ -150,7 +98,7 @@ function stocks(div) {
   // -------------------
 
   this.read = function(err, data) {
-      data.forEach(function(d) {
+      data.forEach(function(d){
           d.date = d3.time.format('%Y-%m-%d').parse(d.date);
           for (var stat in d) {
             if (stat != 'date') {
@@ -161,7 +109,7 @@ function stocks(div) {
 
       $.data = data;
       $.draw();
-      $.macd();
+      $.sign();
       $.zoom();
       $.show();
   }
@@ -181,28 +129,23 @@ function stocks(div) {
 
       $.pre = ($.type == "relative") ? "ratio_" : "";
 
-    // Calcul des intervalles
-
-      $.x.domain(d3.extent($.data.map(function(d) { return d.date })));
-
-      $.y  = d3.scale.linear().range([$.height, 0]);
-      $.y.domain($.compute_domain("price"));
-      $.y_axis = d3.svg.axis().scale($.y).orient("left").tickSize(-$.width, 0);
+    // Définition des axes
 
       if ($.type == "relative") {
-        var percent = function(x) { return d3.format("+.0%")(x - 1); };
-
-        $.y  = d3.scale.log().range([$.height, 0]);
+        $.y = d3.scale.log().range([$.height, 0]);
         $.y_axis = d3.svg.axis()
             .scale($.y)
             .orient("left")
             .tickSize(-$.width, 0)
-            .tickFormat(percent);
-        $.y.domain($.compute_domain("ratio_price"));
-        $.y_axis.tickValues(d3.scale.linear().domain($.y.domain()).ticks(8));
-
+            .tickFormat(function(x) { return d3.format("+.0%")(x - 1); });
       }
 
+      else {
+        $.y = d3.scale.linear().range([$.height, 0]);
+        $.y_axis = d3.svg.axis().scale($.y).orient("left").tickSize(-$.width, 0);
+      }
+
+      $.update_axis("price");
 
     // Affichages des axes
 
@@ -212,15 +155,15 @@ function stocks(div) {
       $.plot.select(".y.axis")
           .call($.y_axis)
           .selectAll(".tick")
-          .classed("tick-one", function(d) { return Math.abs(d-1) < 1e-6; });
+          .classed("tick-one", function(d){ return Math.abs(d-1) < 1e-6; });
 
 
     // Calcul des courbes
 
       function draw(curve) {
         $[curve] = d3.svg.line()
-          .x(function(d) { return $.x(d.date) })
-          .y(function(d) { return $.y(d[$.pre + curve]) });
+          .x(function(d){ return $.x(d.date) })
+          .y(function(d){ return $.y(d[$.pre + curve]) });
 
         $.plot.select("."+curve)
           .datum($.data).transition().duration(1000)
@@ -232,9 +175,9 @@ function stocks(div) {
       }
 
       $.bollinger = d3.svg.area()
-          .x(function(d) { return $.x(d.date) })
-          .y1(function(d) { return $.y(d[$.pre + "bollinger_upper"]) })
-          .y0(function(d) { return $.y(d[$.pre + "bollinger_lower"]) });
+          .x(function(d){ return $.x(d.date) })
+          .y1(function(d){ return $.y(d[$.pre + "bollinger_upper"]) })
+          .y0(function(d){ return $.y(d[$.pre + "bollinger_lower"]) });
 
       $.plot.select(".bollinger")
           .datum($.data).transition().duration(1000)
@@ -246,13 +189,14 @@ function stocks(div) {
   // Affichage du MACD
   // -----------------
 
-  this.macd = function() {
+  this.sign = function() {
 
     // Définition de la zone de travail
 
-      $.svg.attr("height", + $.svg.attr("height") + $.padding)
+      $.svg.attr("height", + $.svg.attr("height") + $.padding + $.bottom )
 
       var macd = $.plot.append("g")
+          .attr("class", "macd_box")
           .attr("transform", "translate(0," +
                                   ($.top + $.height + $.bottom ) + ")");
 
@@ -283,7 +227,8 @@ function stocks(div) {
     // Définition des axes
 
       $.y_macd = d3.scale.linear().range([$.padding, 0]);
-      $.y_macd.domain($.compute_domain("macd"));
+
+      $.update_axis("price");
 
       $.y_macd_axis = d3.svg.axis()
           .scale($.y_macd)
@@ -298,29 +243,29 @@ function stocks(div) {
     // Affichage des courbes
 
       $.macd = d3.svg.line()
-        .x(function(d) { return $.x(d.date) })
-        .y(function(d) { return $.y_macd(d.macd) });
+        .x(function(d){ return $.x(d.date) })
+        .y(function(d){ return $.y_macd(d.macd) });
 
       $.signal = d3.svg.line()
-        .x(function(d) { return $.x(d.date) })
-        .y(function(d) { return $.y_macd(d.signal) });
+        .x(function(d){ return $.x(d.date) })
+        .y(function(d){ return $.y_macd(d.signal) });
 
       $.div = d3.svg.area()
-          .x(function(d) { return $.x(d.date) })
+          .x(function(d){ return $.x(d.date) })
           .y0($.y_macd(0));
 
       macd.datum($.data)
           .append("clipPath")
           .attr("id", "positif")
           .append("path")
-          .attr("d", $.div.y1(function(d) {
+          .attr("d", $.div.y1(function(d){
             return Math.min($.y_macd(0), $.y_macd(1.5 * d.div)) }));
 
       macd.datum($.data)
           .append("clipPath")
           .attr("id", "negatif")
           .append("path")
-          .attr("d", $.div.y1(function(d) {
+          .attr("d", $.div.y1(function(d){
             return Math.max($.y_macd(0), $.y_macd(1.5 * d.div)) }));
 
       macd.select("path.macd").attr("d", $.macd);
@@ -361,12 +306,12 @@ function stocks(div) {
 
     // Calcul des axes
 
-      x_zoom.domain($.x.domain());
+      x_zoom.domain(d3.extent($.data.map(function(d){ return d.date })));
       y_zoom.domain($.y.domain());
 
     // Définition du sélecteur
 
-      var brush = d3.svg.brush()
+      $.brush = d3.svg.brush()
           .x(x_zoom);
 
       zoom.append("g")
@@ -376,7 +321,7 @@ function stocks(div) {
 
       zoom.append("g")
           .attr("class", "x brush")
-          .call(brush)
+          .call($.brush)
           .selectAll("rect")
           .attr("height", $.padding );
 
@@ -384,43 +329,19 @@ function stocks(div) {
       zoom.select(".area")
           .datum($.data)
           .attr("d", d3.svg.area()
-              .x(function(d) { return x_zoom(d.date) })
-              .y1(function(d) { return y_zoom(d.price) })
+              .x(function(d){ return x_zoom(d.date) })
+              .y1(function(d){ return y_zoom(d.price) })
               .y0($.padding));
 
 
-    // Zoom sur la sélection
+    // Mise à jour des valeurs lors de la sélection
 
+      $.brush.on("brush", function () {
 
-      brush.on("brush", function () {
-          var ext = brush.extent();
+          $.update_axis("price");
 
-          if ($.type == "relative") {
-
-            var basedate = d3.min($.data.map(function(d)
-                                    {if (d.date >= ext[0]) return d.date})),
-                basevalue = $.data.find(function (d)
-                                      {return d.date == basedate; }).price;
-
-            $.compute_ratio(basevalue);
-
-          }
-
-          if (!brush.empty()) {
-              $.x.domain(brush.empty() ? x_zoom.domain() : brush.extent());
-              $.y.domain($.compute_domain($.pre + "price", ext));
-          }
-
-          else {
-            $.x.domain(d3.extent($.data.map(function(d) { return d.date })));
-            $.y.domain($.compute_domain($.pre + "price"));
-          }
-
-          if ($.type == "relative") {
-            $.y_axis.tickValues(d3.scale.linear()
-                .domain($.y.domain())
-                .ticks(8));
-          }
+          $.plot.select(".x.axis").call($.x_axis);
+          $.plot.select(".y.axis").call($.y_axis);
 
           for (var c in $.curves) {
             $.plot.select("."+$.curves[c]).attr("d", $[$.curves[c]]);
@@ -428,28 +349,112 @@ function stocks(div) {
 
           $.plot.select(".area").attr("d", $.price);
           $.plot.select(".bollinger").attr("d", $.bollinger);
-          $.plot.select(".x.axis").call($.x_axis);
-          $.plot.select(".y.axis").call($.y_axis);
 
-          d3.select("#positif path")
-              .attr("d", $.div.y1(function(d) {
-                return Math.min($.y_macd(0), $.y_macd(1.5 * d.div)) }));
+          if (!!$.y_macd) {
 
-          d3.select("#negatif path")
-              .attr("d", $.div.y1(function(d) {
-                return Math.max($.y_macd(0), $.y_macd(1.5 * d.div)) }));
+            d3.select("#positif path")
+                .attr("d", $.div.y1(function(d){
+                  return Math.min($.y_macd(0), $.y_macd(1.5 * d.div)) }));
 
-          d3.select(".macd").attr("d", $.macd);
-          d3.select(".signal").attr("d", $.signal);
+            d3.select("#negatif path")
+                .attr("d", $.div.y1(function(d){
+                  return Math.max($.y_macd(0), $.y_macd(1.5 * d.div)) }));
 
-          $.div = d3.svg.area()
-              .x(function(d) { return $.x(d.date) })
-              .y0($.y_macd(0));
+            d3.select(".macd").attr("d", $.macd);
+            d3.select(".signal").attr("d", $.signal);
+
+            $.div = d3.svg.area()
+                .x(function(d){ return $.x(d.date) })
+                .y0($.y_macd(0));
+          }
 
       });
 
   }
 
+
+
+  // Calcul des pourcentages
+  // -----------------------
+
+  this.compute_ratio = function(base) {
+    $.data.forEach(function(d){
+        for (var stat in d) {
+          if (stat != 'date' && stat.indexOf("ratio_") < 0 ) {
+            d['ratio_' + stat] = d[stat] / base;
+          }
+        }
+      });
+  }
+
+
+
+  // Mise à jour des axes
+  // --------------------
+
+
+  this.update_axis = function(key) {
+
+    // Calcul de l'axe horizontal
+
+      if (!$.brush || $.brush.empty()) {
+        var ext = d3.extent($.data.map(function(d){ return d.date }));
+      }
+
+      else {
+        var ext = $.brush.extent();
+      }
+
+      $.x.domain(ext);
+
+
+    // Calcul des ratios
+
+      if ($.type == "relative") {
+
+        var basedate = d3.min($.data.map(function(d)
+                                {if (d.date >= ext[0]) return d.date})),
+            basevalue = $.data.find(function (d)
+                                  {return d.date == basedate; }).price;
+
+        $.y_axis.tickValues(d3.scale.linear().domain($.y.domain()).ticks(8));
+
+        $.compute_ratio(basevalue);
+
+      }
+
+
+    // Calcul des axes verticaux
+
+      $.y.domain(compute_domain($.pre + key));
+
+      if (!!$.y_macd) {
+        $.y_macd.domain(compute_domain("macd"));
+      }
+
+      function compute_domain(key) {
+          var dom = d3.extent($.data.map(function(d){ return d[key] })),
+              ens = [];
+
+          if (key == "macd" || !$.brush || $.brush.empty()) {
+              ens = dom;
+          }
+
+          else {
+            ens = d3.extent($.data.map(val));
+            if ($.type != "relative") {
+              ens = [(4 * ens[0] + dom[0])/5, (4 * ens[1] + dom[1])/5];
+            }
+          }
+
+          var Δ = (ens[1] - ens[0]) * 0.1;
+          return [ens[0] - Δ, ens[1] + Δ];
+
+          function val(d) {
+            return (d.date >= ext[0] && d.date <= ext[1]) ? d[key] : undefined;
+          }
+      }
+  }
 
 
   // Affichage du curseur et des valeurs au survol
@@ -493,9 +498,11 @@ function stocks(div) {
       write_legend("ewma26", "EWMA26", lgd_plot);
       write_legend("bollinger", "Bollinger", lgd_plot);
 
-      write_legend("macd", "MACD", lgd_ma);
-      write_legend("signal", "Signal", lgd_ma);
-      write_legend("div", "Divergence", lgd_ma);
+      if ($.macd) {
+          write_legend("macd", "MACD", lgd_ma);
+          write_legend("signal", "Signal", lgd_ma);
+          write_legend("div", "Divergence", lgd_ma);
+      }
 
       function write_legend(name, title, legend) {
         legend.append("span").attr("class", "lgd").text(title + " : ");
@@ -550,10 +557,13 @@ function stocks(div) {
           lgd['bollinger'].text(fr_digit(d.bollinger_lower)
               + ' – ' + fr_digit(d.bollinger_upper));
 
-          lgd['macd'].text(fr_digit(d.macd));
-          lgd['signal'].text(fr_digit(d.signal));
-          lgd['div'].text(fr_digit(d.div));
-          lgd['div'].attr("class", "val " + ((d.div >= 0) ? "plus" : "minus"));
+          if ($.macd) {
+              lgd['macd'].text(fr_digit(d.macd));
+              lgd['signal'].text(fr_digit(d.signal));
+              lgd['div'].text(fr_digit(d.div));
+              lgd['div'].attr("class", "val " + 
+                  ((d.div >= 0) ? "plus" : "minus"));
+          }
       }
 
   }

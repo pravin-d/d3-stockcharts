@@ -1,7 +1,7 @@
 body {
   font-family: PT Sans, sans-serif;
   width: 875px;
-  margin: 3em auto 1em;
+  margin: 1em auto 1em;
 }
 
 #stocks {
@@ -9,13 +9,6 @@ body {
   border: 30px #f3f3f3 solid;
   font-size: 0.75em;
   cursor: default;
-}
-
-h1 {
-  font-size: 1.75em;
-  margin-bottom: 1em;
-  text-align: center;
-  color: #999;
 }
 
 
