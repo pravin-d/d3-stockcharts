@@ -511,7 +511,6 @@ function stocks(div) {
                   d1 = (!$.data[i] ? $.data[i- 1] : $.data[i]),
                   test = (x0 - d0.date > d1.date - x0),
                   d = test ? d1 : d0;
-
               $.focus.attr("transform", "translate("+$.x(d.date)+",0)");
 
               update_legends(d, test ? d0 : $.data[i - 2])
@@ -527,24 +526,24 @@ function stocks(div) {
 
       function update_legends(d, y) {
 
-          var evol = (d.price - y.price) / y.price * 100,
-              evols = evol > 0 ? '▲ ' : '▼ ';
+          var evol = !!y ? (d.price - y.price) / y.price * 100 : 0,
+              evolc = evol > 0 ? ' plus' : (evol < 0 ? ' minus': '');
 
           lgd_date.text(fr_time(d.date));
           lgd['price'].text(fr_digit(d.price));
 
-          lgd_diff.text(evols + fr_digit(evol).replace('-','')+" %");
-          lgd_diff.attr("class", (evol >= 0) ? "val plus" : "val minus");
+          lgd_diff.text(fr_digit(evol).replace('-','')+" %");
+          lgd_diff.attr("class", "val evol" + evolc);
 
           lgd['ewma12'].text(fr_digit(d.ewma12));
           lgd['ewma26'].text(fr_digit(d.ewma26));
-          lgd['bollinger'].text(fr_digit(d.bollinger_upper)
-              + ' – ' + fr_digit(d.bollinger_lower));
+          lgd['bollinger'].text(fr_digit(d.bollinger_lower)
+              + ' – ' + fr_digit(d.bollinger_upper));
 
           lgd['macd'].text(fr_digit(d.macd));
           lgd['signal'].text(fr_digit(d.signal));
           lgd['div'].text(fr_digit(d.div));
-          lgd['div'].attr("class", (d.div >= 0) ? "val plus" : "val minus");
+          lgd['div'].attr("class", "val " + ((d.div >= 0) ? "plus" : "minus"));
       }
 
   }

@@ -129,7 +129,6 @@ path.signal {
 
 
 
-
 .brush .extent {
   stroke: #bbb;
   fill-opacity: .125;
@@ -165,8 +164,28 @@ path.signal {
   display: inline-block;
 }
 
-.lgd_plot .val.plus, .lgd_plot .val.minus {
+.val {
+  display: inline-block;
+  min-width: 2.5em;
+  text-align: right;
+}
+.lgd_plot .evol {
   margin-left: 10px;
+}
+
+.lgd_plot .evol:before {
+  content: '∼';
+  width: 1.5em;
+  text-align: center;
+  display: inline-block;
+}
+
+.lgd_plot .evol.plus:before {
+  content: '▲';
+}
+
+.lgd_plot .evol.minus:before {
+  content: '▼';
 }
 
 .lgd_date {
