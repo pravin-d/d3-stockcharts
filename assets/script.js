@@ -23,7 +23,7 @@ function stocks(div) {
 
       $.width   = 760;
       $.height  = 350;
-      $.top     =  25;
+      $.top     =  30;
       $.bottom  =  40;
       $.left    =  40;
       $.right   =  20;
@@ -145,7 +145,8 @@ function stocks(div) {
         $.y_axis = d3.svg.axis().scale($.y).orient("left").tickSize(-$.width, 0);
       }
 
-      $.update_axis("price");
+      $.update_axis();
+
 
     // Affichages des axes
 
@@ -227,9 +228,7 @@ function stocks(div) {
     // Définition des axes
 
       $.y_macd = d3.scale.linear().range([$.padding, 0]);
-
-      $.update_axis("price");
-
+      $.y_macd.domain($.compute_domain("macd"));
       $.y_macd_axis = d3.svg.axis()
           .scale($.y_macd)
           .orient("left")
@@ -338,7 +337,7 @@ function stocks(div) {
 
       $.brush.on("brush", function () {
 
-          $.update_axis("price");
+          $.update_axis();
 
           $.plot.select(".x.axis").call($.x_axis);
           $.plot.select(".y.axis").call($.y_axis);
@@ -393,19 +392,19 @@ function stocks(div) {
   // --------------------
 
 
-  this.update_axis = function(key) {
+  this.update_axis = function() {
 
     // Calcul de l'axe horizontal
 
       if (!$.brush || $.brush.empty()) {
-        var ext = d3.extent($.data.map(function(d){ return d.date }));
+        $.ext = d3.extent($.data.map(function(d){ return d.date }));
       }
 
       else {
-        var ext = $.brush.extent();
+        $.ext = $.brush.extent();
       }
 
-      $.x.domain(ext);
+      $.x.domain($.ext);
 
 
     // Calcul des ratios
@@ -413,7 +412,7 @@ function stocks(div) {
       if ($.type == "relative") {
 
         var basedate = d3.min($.data.map(function(d)
-                                {if (d.date >= ext[0]) return d.date})),
+                                {if (d.date >= $.ext[0]) return d.date})),
             basevalue = $.data.find(function (d)
                                   {return d.date == basedate; }).price;
 
@@ -426,35 +425,38 @@ function stocks(div) {
 
     // Calcul des axes verticaux
 
-      $.y.domain(compute_domain($.pre + key));
+      $.y.domain($.compute_domain($.pre + "price"));
+  }
 
-      if (!!$.y_macd) {
-        $.y_macd.domain(compute_domain("macd"));
+
+
+  // Calcul des domaines
+  // -------------------
+
+  this.compute_domain = function(key) {
+      var dom = d3.extent($.data.map(function(d){ return d[key] })),
+          ens = [];
+
+      if (key == "macd" || !$.brush || $.brush.empty()) {
+          ens = dom;
       }
 
-      function compute_domain(key) {
-          var dom = d3.extent($.data.map(function(d){ return d[key] })),
-              ens = [];
+      else {
+        ens = d3.extent($.data.map(val));
+        if ($.type != "relative") {
+          ens = [(4 * ens[0] + dom[0])/5, (4 * ens[1] + dom[1])/5];
+        }
+      }
 
-          if (key == "macd" || !$.brush || $.brush.empty()) {
-              ens = dom;
-          }
+      var Δ = (ens[1] - ens[0]) * 0.1;
+      return [ens[0] - Δ, ens[1] + Δ];
 
-          else {
-            ens = d3.extent($.data.map(val));
-            if ($.type != "relative") {
-              ens = [(4 * ens[0] + dom[0])/5, (4 * ens[1] + dom[1])/5];
-            }
-          }
-
-          var Δ = (ens[1] - ens[0]) * 0.1;
-          return [ens[0] - Δ, ens[1] + Δ];
-
-          function val(d) {
-            return (d.date >= ext[0] && d.date <= ext[1]) ? d[key] : undefined;
-          }
+      function val(d) {
+        return (d.date >= $.ext[0] && d.date <= $.ext[1]) ? d[key] : undefined;
       }
   }
+
+
 
 
   // Affichage du curseur et des valeurs au survol
@@ -561,7 +563,7 @@ function stocks(div) {
               lgd['macd'].text(fr_digit(d.macd));
               lgd['signal'].text(fr_digit(d.signal));
               lgd['div'].text(fr_digit(d.div));
-              lgd['div'].attr("class", "val " + 
+              lgd['div'].attr("class", "val " +
                   ((d.div >= 0) ? "plus" : "minus"));
           }
       }
