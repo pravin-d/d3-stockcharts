@@ -12,9 +12,9 @@ function stocks(div) {
   // Initialisation du graphique
   // ---------------------------
 
-  this.init = function() {
+  this.init = function(isin) {
 
-    // Données à afficher sur le graphique
+    // Courbes à afficher sur le graphique
 
       $.curves = ["ewma12", "ewma26", "price"];
 
@@ -29,6 +29,52 @@ function stocks(div) {
       $.right   =  20;
       $.padding = 100;
 
+  }
+
+
+  // Chargement des données et affichage par défaut
+  // ----------------------------------------------
+
+  this.load = function(isin) {
+
+      if (isin === undefined) {
+        isin = window.location.search.replace("?", "")
+      }
+
+      d3.csv('data/isin/' + isin + '.csv', function(err, data) {
+          $.read(err, data);
+          $.set_zoom("1a", 1)
+          $.draw_plot();
+          $.draw_macd();
+          $.draw_zoom();
+          $.show_data();
+      })
+  }
+
+
+
+  // Lecture des données
+  // -------------------
+
+  this.read = function(err, data) {
+      data.forEach(function(d){
+          d.date = d3.time.format('%Y-%m-%d').parse(d.date);
+          for (var stat in d) {
+            if (stat != 'date') {
+              d[stat] = +d[stat];
+            }
+          }
+        });
+
+      $.data = data;
+  }
+
+
+
+  // Affichage du graphique
+  // ----------------------
+
+  this.draw_plot = function() {
 
     // Définition des échelles
 
@@ -69,58 +115,6 @@ function stocks(div) {
           .style("clip-path", " url(#clip)")
 
 
-    // Créations des axes
-
-      $.plot.append("g")
-          .attr("class", "y axis");
-
-      $.plot.append("g")
-          .attr("class", "x axis")
-          .attr("transform", "translate(0," + $.height + ")");
-
-  }
-
-
-
-  // Chargement des données
-  // ----------------------
-
-
-  this.load = function() {
-    var isin = window.location.search.replace("?", "")
-    if (isin) {
-        d3.csv('data/isin/' + isin + '.csv', graph.read)
-    }
-  }
-
-
-  // Lecture des données
-  // -------------------
-
-  this.read = function(err, data) {
-      data.forEach(function(d){
-          d.date = d3.time.format('%Y-%m-%d').parse(d.date);
-          for (var stat in d) {
-            if (stat != 'date') {
-              d[stat] = +d[stat];
-            }
-          }
-        });
-
-      $.data = data;
-      $.draw();
-      $.sign();
-      $.zoom();
-      $.show();
-  }
-
-
-
-  // Affichage du graphique
-  // ----------------------
-
-  this.draw = function() {
-
     // Calcul des données
 
       if ($.type == "relative") {
@@ -129,7 +123,15 @@ function stocks(div) {
 
       $.pre = ($.type == "relative") ? "ratio_" : "";
 
-    // Définition des axes
+
+    // Créations et affichage des axes
+
+      $.plot.append("g")
+          .attr("class", "y axis");
+
+      $.plot.append("g")
+          .attr("class", "x axis")
+          .attr("transform", "translate(0," + $.height + ")");
 
       if ($.type == "relative") {
         $.y = d3.scale.log().range([$.height, 0]);
@@ -147,9 +149,6 @@ function stocks(div) {
 
       $.update_axis();
 
-
-    // Affichages des axes
-
       $.plot.select(".x.axis")
           .call($.x_axis);
 
@@ -162,13 +161,13 @@ function stocks(div) {
     // Calcul des courbes
 
       function draw(curve) {
-        $[curve] = d3.svg.line()
-          .x(function(d){ return $.x(d.date) })
-          .y(function(d){ return $.y(d[$.pre + curve]) });
+          $[curve] = d3.svg.line()
+            .x(function(d){ return $.x(d.date) })
+            .y(function(d){ return $.y(d[$.pre + curve]) });
 
-        $.plot.select("."+curve)
-          .datum($.data).transition().duration(1000)
-          .attr("d", $[curve]);
+          $.plot.select("."+curve)
+            .datum($.data).transition().duration(1000)
+            .attr("d", $[curve]);
       }
 
       for (var c in $.curves) {
@@ -190,7 +189,7 @@ function stocks(div) {
   // Affichage du MACD
   // -----------------
 
-  this.sign = function() {
+  this.draw_macd = function() {
 
     // Définition de la zone de travail
 
@@ -242,12 +241,12 @@ function stocks(div) {
     // Affichage des courbes
 
       $.macd = d3.svg.line()
-        .x(function(d){ return $.x(d.date) })
-        .y(function(d){ return $.y_macd(d.macd) });
+          .x(function(d){ return $.x(d.date) })
+          .y(function(d){ return $.y_macd(d.macd) });
 
       $.signal = d3.svg.line()
-        .x(function(d){ return $.x(d.date) })
-        .y(function(d){ return $.y_macd(d.signal) });
+          .x(function(d){ return $.x(d.date) })
+          .y(function(d){ return $.y_macd(d.signal) });
 
       $.div = d3.svg.area()
           .x(function(d){ return $.x(d.date) })
@@ -277,7 +276,7 @@ function stocks(div) {
   // Affichage du sélecteur
   // ----------------------
 
-  this.zoom = function() {
+  this.draw_zoom = function() {
 
     // Définition de la zone de travail
 
@@ -322,7 +321,7 @@ function stocks(div) {
           .attr("class", "x brush")
           .call($.brush)
           .selectAll("rect")
-          .attr("height", $.padding );
+          .attr("height", $.padding);
 
 
       zoom.select(".area")
@@ -337,6 +336,12 @@ function stocks(div) {
 
       $.brush.on("brush", $.brushed);
 
+      if (!!$.init_ext) {
+        d3.select('.zoom .x.brush')
+            .call($.brush.extent($.init_ext))
+
+        delete($.init_ext);
+      }
   }
 
 
@@ -345,13 +350,13 @@ function stocks(div) {
   // -----------------------
 
   this.compute_ratio = function(base) {
-    $.data.forEach(function(d){
-        for (var stat in d) {
-          if (stat != 'date' && stat.indexOf("ratio_") < 0 ) {
-            d['ratio_' + stat] = d[stat] / base;
+      $.data.forEach(function(d){
+          for (var stat in d) {
+            if (stat != 'date' && stat.indexOf("ratio_") < 0 ) {
+              d['ratio_' + stat] = d[stat] / base;
+            }
           }
-        }
-      });
+        });
   }
 
 
@@ -364,7 +369,11 @@ function stocks(div) {
 
     // Calcul de l'axe horizontal
 
-      if (!$.brush || $.brush.empty()) {
+      if ($.init_ext) {
+          $.ext = $.init_ext;
+      }
+
+      else if (!$.brush || $.brush.empty()) {
         $.ext = d3.extent($.data.map(function(d){ return d.date }));
       }
 
@@ -378,16 +387,13 @@ function stocks(div) {
     // Calcul des ratios
 
       if ($.type == "relative") {
-
         var basedate = d3.min($.data.map(function(d)
                                 {if (d.date >= $.ext[0]) return d.date})),
             basevalue = $.data.find(function (d)
                                   {return d.date == basedate; }).price;
 
         $.y_axis.tickValues(d3.scale.linear().domain($.y.domain()).ticks(8));
-
         $.compute_ratio(basevalue);
-
       }
 
 
@@ -405,8 +411,12 @@ function stocks(div) {
       var dom = d3.extent($.data.map(function(d){ return d[key] })),
           ens = [];
 
+      function val(d) {
+          return (d.date >= $.ext[0] && d.date <= $.ext[1]) ? d[key] : undefined;
+      }
+
       if (key == "macd" || !$.brush || $.brush.empty()) {
-          ens = dom;
+        ens = dom;
       }
 
       else {
@@ -418,10 +428,6 @@ function stocks(div) {
 
       var Δ = (ens[1] - ens[0]) * 0.1;
       return [ens[0] - Δ, ens[1] + Δ];
-
-      function val(d) {
-        return (d.date >= $.ext[0] && d.date <= $.ext[1]) ? d[key] : undefined;
-      }
   }
 
 
@@ -430,7 +436,7 @@ function stocks(div) {
   // Affichage du curseur et des valeurs au survol
   // ---------------------------------------------
 
-  this.show = function() {
+  this.show_data = function() {
 
     // Création de la ligne
 
@@ -475,8 +481,8 @@ function stocks(div) {
       }
 
       function write_legend(name, title, legend) {
-        legend.append("span").attr("class", "lgd").text(title + " : ");
-        lgd[name] = legend.append("span").attr("class", "val lgd_" + name);
+          legend.append("span").attr("class", "lgd").text(title + " : ");
+          lgd[name] = legend.append("span").attr("class", "val lgd_" + name);
       }
 
     // Affichage des valeurs dynamiquement
@@ -503,12 +509,12 @@ function stocks(div) {
               update_legends(d, test ? d0 : $.data[i - 2])
             })
           .on("mouseover", function() {
-              $.focus.style("display", null)
+                $.focus.style("display", null)
             });
 
       function default_legends() {
-        $.focus.style("display", "none");
-        update_legends($.data.slice(-1)[0], $.data.slice(-2)[0]);
+          $.focus.style("display", "none");
+          update_legends($.data.slice(-1)[0], $.data.slice(-2)[0]);
       }
 
       function update_legends(d, y) {
@@ -528,16 +534,15 @@ function stocks(div) {
               + ' – ' + fr_digit(d.bollinger_upper));
 
           if ($.macd) {
-              lgd['macd'].text(fr_digit(d.macd));
-              lgd['signal'].text(fr_digit(d.signal));
-              lgd['div'].text(fr_digit(d.div));
-              lgd['div'].attr("class", "val " +
-                  ((d.div >= 0) ? "plus" : "minus"));
+            lgd['macd'].text(fr_digit(d.macd));
+            lgd['signal'].text(fr_digit(d.signal));
+            lgd['div'].text(fr_digit(d.div));
+            lgd['div'].attr("class", "val " +
+                ((d.div >= 0) ? "plus" : "minus"));
           }
       }
 
   }
-
 
 
 
@@ -598,24 +603,32 @@ function stocks(div) {
   // Affichage des intervalles de temps
   // ----------------------------------
 
-  this.date = function(time) {
+  this.set_zoom = function(time, init) {
 
-    var today = new Date($.data[$.data.length - 1].date),
-        start = new Date($.data[$.data.length - 1].date),
-        arg = /(\d+)(.)/.exec(time);
+      var today = new Date($.data[$.data.length - 1].date),
+          start = new Date($.data[$.data.length - 1].date),
+          arg = /(\d+)(.)/.exec(time);
 
-    if (arg[2] == 'm')
-      start.setMonth(start.getMonth() - arg[1])
+      if (arg[2] == 'm') {
+        start.setMonth(start.getMonth() - arg[1])
+      }
 
-    if (arg[2] == 'y' or arg[2] == 'a')
-      start.setFullYear(start.getFullYear() - arg[1])
+      if (arg[2] == 'y' || arg[2] == 'a') {
+        start.setFullYear(start.getFullYear() - arg[1])
+      }
 
-    $.brush.extent([start, today])
-    $.brushed(1);
-    d3.select('.zoom .x.brush')
-        .transition()
-        .duration($.brush.empty() ? 0 : 0)
-        .call($.brush.extent([start, today]))
+      if (init === undefined) {
+        $.brush.extent([start, today])
+        $.brushed(1);
+        d3.select('.zoom .x.brush')
+            .transition()
+            .duration($.brush.empty() ? 0 : 0)
+            .call($.brush.extent([start, today]))
+      }
+
+      else {
+        $.init_ext = [start, today];
+      }
 
   }
 
