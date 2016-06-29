@@ -335,39 +335,7 @@ function stocks(div) {
 
     // Mise à jour des valeurs lors de la sélection
 
-      $.brush.on("brush", function () {
-
-          $.update_axis();
-
-          $.plot.select(".x.axis").call($.x_axis);
-          $.plot.select(".y.axis").call($.y_axis);
-
-          for (var c in $.curves) {
-            $.plot.select("."+$.curves[c]).attr("d", $[$.curves[c]]);
-          }
-
-          $.plot.select(".area").attr("d", $.price);
-          $.plot.select(".bollinger").attr("d", $.bollinger);
-
-          if (!!$.y_macd) {
-
-            d3.select("#positif path")
-                .attr("d", $.div.y1(function(d){
-                  return Math.min($.y_macd(0), $.y_macd(1.5 * d.div)) }));
-
-            d3.select("#negatif path")
-                .attr("d", $.div.y1(function(d){
-                  return Math.max($.y_macd(0), $.y_macd(1.5 * d.div)) }));
-
-            d3.select(".macd").attr("d", $.macd);
-            d3.select(".signal").attr("d", $.signal);
-
-            $.div = d3.svg.area()
-                .x(function(d){ return $.x(d.date) })
-                .y0($.y_macd(0));
-          }
-
-      });
+      $.brush.on("brush", $.brushed);
 
   }
 
@@ -569,6 +537,88 @@ function stocks(div) {
       }
 
   }
+
+
+
+
+  // Mise à jour du sélecteur
+  // ------------------------
+
+  this.brushed = function(transition) {
+
+      function animate(fun) {
+        if (transition == 1) {
+          return fun.transition().duration(750);
+        }
+
+        return fun;
+      }
+
+      $.update_axis();
+
+      $.plot.select(".x.axis").call($.x_axis);
+      $.plot.select(".y.axis").call($.y_axis);
+
+      for (var c in $.curves) {
+          animate($.plot.select("."+$.curves[c]))
+          .attr("d", $[$.curves[c]]);
+      }
+
+      animate($.plot.select(".area"))
+          .attr("d", $.price);
+
+      animate($.plot.select(".bollinger"))
+          .attr("d", $.bollinger);
+
+      if (!!$.y_macd) {
+
+        animate(d3.select("#positif path"))
+            .attr("d", $.div.y1(function(d){
+              return Math.min($.y_macd(0), $.y_macd(1.5 * d.div)) }));
+
+        animate(d3.select("#negatif path"))
+            .attr("d", $.div.y1(function(d){
+              return Math.max($.y_macd(0), $.y_macd(1.5 * d.div)) }));
+
+        animate(d3.select(".macd"))
+            .attr("d", $.macd);
+
+        animate(d3.select(".signal"))
+            .attr("d", $.signal);
+
+        $.div = d3.svg.area()
+            .x(function(d){ return $.x(d.date) })
+            .y0($.y_macd(0));
+      }
+
+  }
+
+
+
+  // Affichage des intervalles de temps
+  // ----------------------------------
+
+  this.date = function(time) {
+
+    var today = new Date($.data[$.data.length - 1].date),
+        start = new Date($.data[$.data.length - 1].date),
+        arg = /(\d+)(.)/.exec(time);
+
+    if (arg[2] == 'm')
+      start.setMonth(start.getMonth() - arg[1])
+
+    if (arg[2] == 'y' or arg[2] == 'a')
+      start.setFullYear(start.getFullYear() - arg[1])
+
+    $.brush.extent([start, today])
+    $.brushed(1);
+    d3.select('.zoom .x.brush')
+        .transition()
+        .duration($.brush.empty() ? 0 : 0)
+        .call($.brush.extent([start, today]))
+
+  }
+
 
   var $ = this;
   $.init();
