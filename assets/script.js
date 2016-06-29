@@ -305,7 +305,7 @@ function stocks(div) {
     // Calcul des axes
 
       x_zoom.domain(d3.extent($.data.map(function(d){ return d.date })));
-      y_zoom.domain($.y.domain());
+      y_zoom.domain(d3.extent($.data.map(function(d){ return d.price })));
 
     // Définition du sélecteur
 
@@ -415,7 +415,7 @@ function stocks(div) {
           return (d.date >= $.ext[0] && d.date <= $.ext[1]) ? d[key] : undefined;
       }
 
-      if (key == "macd" || !$.brush || $.brush.empty()) {
+      if (!$.init_ext && (key == "macd" || !$.brush || $.brush.empty())) {
         ens = dom;
       }
 
