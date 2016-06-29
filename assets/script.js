@@ -21,10 +21,10 @@ function stocks(div) {
 
     // Modèles de boîtes
 
-      $.width   = 760;
+      $.width   = 600;
       $.height  = 350;
-      $.top     =  30;
-      $.bottom  =  40;
+      $.top     =  20;
+      $.bottom  =  60;
       $.left    =  40;
       $.right   =  20;
       $.padding = 100;
@@ -43,7 +43,7 @@ function stocks(div) {
 
       d3.csv('data/isin/' + isin + '.csv', function(err, data) {
           $.read(err, data);
-          $.set_zoom("1a", 1)
+          $.set_zoom("1a")
           $.draw_plot();
           $.draw_macd();
           $.draw_zoom();
@@ -85,11 +85,15 @@ function stocks(div) {
 
     // Création de l'espace de travail
 
+      $.svg_width = $.width + $.left + $.right,
+      $.svg_height = $.height + $.top + $.bottom;
+
       $.svg = d3.select(div)
           .append("svg")
           .attr("class", "plot")
-          .attr("width", $.width + $.left + $.right )
-          .attr("height", $.height + $.top + $.bottom)
+          .attr("width", "100%")
+          .attr("height", "100%")
+          .attr('viewBox','0 0 '+ $.svg_width +' '+ $.svg_height)
 
       $.svg.append("defs").append("clipPath")
           .attr("id", "clip")
@@ -166,7 +170,7 @@ function stocks(div) {
             .y(function(d){ return $.y(d[$.pre + curve]) });
 
           $.plot.select("."+curve)
-            .datum($.data).transition().duration(1000)
+            .datum($.data)
             .attr("d", $[curve]);
       }
 
@@ -180,7 +184,7 @@ function stocks(div) {
           .y0(function(d){ return $.y(d[$.pre + "bollinger_lower"]) });
 
       $.plot.select(".bollinger")
-          .datum($.data).transition().duration(1000)
+          .datum($.data)
           .attr("d", $.bollinger);
   }
 
@@ -193,12 +197,14 @@ function stocks(div) {
 
     // Définition de la zone de travail
 
-      $.svg.attr("height", + $.svg.attr("height") + $.padding + $.bottom )
-
       var macd = $.plot.append("g")
           .attr("class", "macd_box")
           .attr("transform", "translate(0," +
-                                  ($.top + $.height + $.bottom ) + ")");
+              ($.svg_height + $.top - $.bottom) + ")");
+
+      $.svg_height += $.padding + $.top;
+
+      $.svg.attr('viewBox','0 0 '+ $.svg_width +' '+ $.svg_height);
 
 
     // Définition des courbes
@@ -280,19 +286,14 @@ function stocks(div) {
 
     // Définition de la zone de travail
 
-      var zoom = d3.select(div)
-          .append("svg")
+      var zoom = $.plot.append("g")
           .attr("class", "zoom")
-          .attr("width",  ($.width + $.left + $.right ))
-          .attr("height", ($.padding + $.bottom))
-          .append("g")
-          .attr("transform", "translate(" + $.left + ",0)");
+          .attr("transform", "translate(0," +
+              ($.svg_height + $.top - $.bottom) + ")");
 
+      $.svg_height += $.padding + $.top;
 
-    // Définition des échelles
-
-      var x_zoom = d3.time.scale().range([0, $.width]);
-      var y_zoom = d3.scale.linear().range([$.padding, 0]);
+      $.svg.attr('viewBox','0 0 '+ $.svg_width +' '+ $.svg_height );
 
 
     // Définition des courbes
@@ -302,27 +303,34 @@ function stocks(div) {
           .style("clip-path", " url(#clip)")
 
 
-    // Calcul des axes
+    // Définition des axes
+
+      var x_zoom = d3.time.scale().range([0, $.width]),
+          x_zoom_axis = d3.svg.axis().scale(x_zoom)
+              .orient("bottom").tickFormat(fr_axis);
+
+      var y_zoom = d3.scale.linear().range([$.padding, 0]);
 
       x_zoom.domain(d3.extent($.data.map(function(d){ return d.date })));
       y_zoom.domain(d3.extent($.data.map(function(d){ return d.price })));
+
+      zoom.append("g")
+          .attr("class", "x_zoom axis")
+          .attr("transform", "translate(0," + $.padding + ")")
+          .call(x_zoom_axis);
+
 
     // Définition du sélecteur
 
       $.brush = d3.svg.brush()
           .x(x_zoom);
 
-      zoom.append("g")
-          .attr("class", "x axis")
-          .attr("transform", "translate(0," + $.padding + ")")
-          .call($.x_axis);
 
       zoom.append("g")
           .attr("class", "x brush")
           .call($.brush)
           .selectAll("rect")
           .attr("height", $.padding);
-
 
       zoom.select(".area")
           .datum($.data)
@@ -334,14 +342,14 @@ function stocks(div) {
 
     // Mise à jour des valeurs lors de la sélection
 
-      $.brush.on("brush", $.brushed);
-
       if (!!$.init_ext) {
         d3.select('.zoom .x.brush')
             .call($.brush.extent($.init_ext))
 
         delete($.init_ext);
       }
+
+      $.brush.on("brush", $.brushed);
   }
 
 
@@ -446,7 +454,7 @@ function stocks(div) {
 
       $.focus.append("line")
           .attr("y1", 10)
-          .attr("y2", 10 * $.height);
+          .attr("y2", $.svg_height - $.padding - $.bottom - $.top);
 
 
     // Création des textes
@@ -490,7 +498,7 @@ function stocks(div) {
       $.plot.append("rect")
           .attr("class", "overlay")
           .attr("width", $.width)
-          .attr("height", 10 * $.height)
+          .attr("height", $.svg_height - $.padding - $.bottom - $.top);
 
       default_legends();
 
@@ -561,16 +569,12 @@ function stocks(div) {
 
       $.update_axis();
 
-      $.plot.select(".x.axis").call($.x_axis);
       $.plot.select(".y.axis").call($.y_axis);
 
       for (var c in $.curves) {
           animate($.plot.select("."+$.curves[c]))
           .attr("d", $[$.curves[c]]);
       }
-
-      animate($.plot.select(".area"))
-          .attr("d", $.price);
 
       animate($.plot.select(".bollinger"))
           .attr("d", $.bollinger);
@@ -603,7 +607,7 @@ function stocks(div) {
   // Affichage des intervalles de temps
   // ----------------------------------
 
-  this.set_zoom = function(time, init) {
+  this.set_zoom = function(time) {
 
       var today = new Date($.data[$.data.length - 1].date),
           start = new Date($.data[$.data.length - 1].date),
@@ -617,7 +621,7 @@ function stocks(div) {
         start.setFullYear(start.getFullYear() - arg[1])
       }
 
-      if (init === undefined) {
+      if (!!$.brush) {
         $.brush.extent([start, today])
         $.brushed(1);
         d3.select('.zoom .x.brush')
