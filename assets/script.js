@@ -37,18 +37,18 @@ function stocks(div) {
   this.load = function(isin) {
 
       if (isin === undefined) {
-        isin = window.location.search.replace("?", "")
+        isin = window.location.search.replace("?", "");
       }
 
       d3.csv('data/isin/' + isin + '.csv', function(err, data) {
           $.read(err, data);
-          $.set_zoom("1a")
+          $.set_zoom("1a");
           $.draw_plot();
           $.draw_macd();
           $.draw_zoom();
           $.show_data();
-      })
-  }
+      });
+  };
 
 
 
@@ -66,7 +66,7 @@ function stocks(div) {
         });
 
       $.data = data;
-  }
+  };
 
 
 
@@ -93,7 +93,7 @@ function stocks(div) {
               .append("svg")
               .attr("width", "100%")
               .attr("height", "100%")
-              .attr('viewBox','0 0 '+ $.svg_width +' '+ $.svg_height)
+              .attr('viewBox','0 0 '+ $.svg_width +' '+ $.svg_height);
 
           $.svg.append("defs").append("clipPath")
               .attr("id", "clip")
@@ -127,7 +127,7 @@ function stocks(div) {
         var selecteur = plot.append("text")
             .attr("class", "selecteur absolute")
             .attr("x", -$.left + 13)
-            .attr("y", -7)
+            .attr("y", -10)
             .on("click", function() {
                 var type = ($.type == "relative") ? "absolute" : "relative";
                 $.type = type;
@@ -152,7 +152,7 @@ function stocks(div) {
 
     // Créations et affichage des axes
 
-      var plot = $.svg.select(".div_plot")
+      var plot = $.svg.select(".div_plot");
 
       plot.append("g")
           .attr("class", "y axis");
@@ -211,7 +211,7 @@ function stocks(div) {
       $.wrap.select(".bollinger")
           .datum($.data)
           .attr("d", $.bollinger);
-  }
+  };
 
 
 
@@ -300,7 +300,7 @@ function stocks(div) {
       macd.select("path.macd").attr("d", $.macd);
       macd.select("path.signal").attr("d", $.signal);
 
-  }
+  };
 
 
 
@@ -324,7 +324,7 @@ function stocks(div) {
 
       zoom.append("path")
           .attr("class", "area")
-          .style("clip-path", " url(#clip)")
+          .style("clip-path", " url(#clip)");
 
 
     // Définition des axes
@@ -366,14 +366,14 @@ function stocks(div) {
     // Mise à jour des valeurs lors de la sélection
 
       if (!!$.init_ext) {
-        d3.select('.zoom .x.brush')
-            .call($.brush.extent($.init_ext))
+        d3.select('.div_zoom .x.brush')
+            .call($.brush.extent($.init_ext));
 
         delete($.init_ext);
       }
 
       $.brush.on("brush", $.brushed);
-  }
+  };
 
 
 
@@ -388,7 +388,7 @@ function stocks(div) {
             }
           }
         });
-  }
+  };
 
 
 
@@ -431,7 +431,7 @@ function stocks(div) {
     // Calcul des axes verticaux
 
       $.y.domain($.compute_domain($.pre + "price"));
-  }
+  };
 
 
 
@@ -443,7 +443,7 @@ function stocks(div) {
           ens = [];
 
       function val(d) {
-          return (d.date >= $.ext[0] && d.date <= $.ext[1]) ? d[key]:undefined;
+          return (d.date >= $.ext[0] && d.date <= $.ext[1])?d[key]:undefined;
       }
 
       if (!$.init_ext && (key == "macd" || !$.brush || $.brush.empty())) {
@@ -459,8 +459,7 @@ function stocks(div) {
 
       var Δ = (ens[1] - ens[0]) * 0.1;
       return [ens[0] - Δ, ens[1] + Δ];
-  }
-
+  };
 
 
 
@@ -563,7 +562,7 @@ function stocks(div) {
                   d = test ? d1 : d0;
               $.focus.attr("transform", "translate("+$.x(d.date)+",0)");
 
-              update_legends(d, test ? d0 : $.data[i - 2])
+              update_legends(d, test ? d0 : $.data[i - 2]);
             })
           .on("mouseover", function() {
                 $.focus.style("display", null)
@@ -583,7 +582,7 @@ function stocks(div) {
           lgd_date.text(fr_time(d.date));
           lgd['price'].text(fr_digit(d.price) + " €");
 
-          lgd_diff.attr("class", "lgd_diff" + evolc)
+          lgd_diff.attr("class", "lgd_diff" + evolc);
           lgd_triangle.text(evols);
           lgd_difference.text(fr_digit(evol).replace('-','')+" %");
 
@@ -601,7 +600,7 @@ function stocks(div) {
           }
       }
 
-  }
+  };
 
 
 
@@ -624,7 +623,7 @@ function stocks(div) {
 
       for (var c in $.curves) {
           animate($.wrap.select("."+$.curves[c]))
-          .attr("d", $[$.curves[c]]);
+              .attr("d", $[$.curves[c]]);
       }
 
       animate($.wrap.select(".bollinger"))
@@ -634,11 +633,11 @@ function stocks(div) {
 
         animate(d3.select("#positif path"))
             .attr("d", $.div.y1(function(d){
-              return Math.min($.y_macd(0), $.y_macd(1.5 * d.div)) }));
+              return Math.min($.y_macd(0), $.y_macd(1.5 * d.div)); }));
 
         animate(d3.select("#negatif path"))
             .attr("d", $.div.y1(function(d){
-              return Math.max($.y_macd(0), $.y_macd(1.5 * d.div)) }));
+              return Math.max($.y_macd(0), $.y_macd(1.5 * d.div)); }));
 
         animate(d3.select(".macd"))
             .attr("d", $.macd);
@@ -647,11 +646,11 @@ function stocks(div) {
             .attr("d", $.signal);
 
         $.div = d3.svg.area()
-            .x(function(d){ return $.x(d.date) })
+            .x(function(d){ return $.x(d.date); })
             .y0($.y_macd(0));
       }
 
-  }
+  };
 
 
 
@@ -665,27 +664,27 @@ function stocks(div) {
           arg = /(\d+)(.)/.exec(time);
 
       if (arg[2] == 'm') {
-        start.setMonth(start.getMonth() - arg[1])
+        start.setMonth(start.getMonth() - arg[1]);
       }
 
       if (arg[2] == 'y' || arg[2] == 'a') {
-        start.setFullYear(start.getFullYear() - arg[1])
+        start.setFullYear(start.getFullYear() - arg[1]);
       }
 
       if (!!$.brush) {
-        $.brush.extent([start, today])
+        $.brush.extent([start, today]);
         $.brushed(1);
-        d3.select('.zoom .x.brush')
+        d3.select('.div_zoom .x.brush')
             .transition()
             .duration($.brush.empty() ? 0 : 0)
-            .call($.brush.extent([start, today]))
+            .call($.brush.extent([start, today]));
       }
 
       else {
         $.init_ext = [start, today];
       }
 
-  }
+  };
 
 
   var $ = this;
