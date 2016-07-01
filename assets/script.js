@@ -22,13 +22,12 @@ function stocks(div) {
     // Modèles de boîtes
 
       $.width   = 600;
-      $.height  = 350;
-      $.top     =  20;
-      $.bottom  =  60;
+      $.height  = 300;
+      $.top     =  30;
+      $.bottom  =  40;
       $.left    =  40;
       $.right   =  20;
       $.padding = 100;
-
   }
 
 
@@ -101,20 +100,23 @@ function stocks(div) {
           .attr("width", $.width)
           .attr("height", $.top + $.height + $.bottom);
 
-      $.plot = $.svg.append("g")
+      $.wrap = $.svg.append("g")
           .attr("class", "wrap")
           .attr("transform", "translate(" + $.left + "," + $.top + ")");
+
+      var plot = $.wrap.append("g")
+          .attr("class", "plot");
 
 
     // Créations des courbes
 
       for (var c in $.curves) {
-        $.plot.append("path")
+        plot.append("path")
             .attr("class", $.curves[c])
             .style("clip-path", " url(#clip)");
       }
 
-      $.plot.append("path")
+      plot.append("path")
           .attr("class", "bollinger")
           .style("clip-path", " url(#clip)")
 
@@ -130,10 +132,10 @@ function stocks(div) {
 
     // Créations et affichage des axes
 
-      $.plot.append("g")
+      plot.append("g")
           .attr("class", "y axis");
 
-      $.plot.append("g")
+      plot.append("g")
           .attr("class", "x axis")
           .attr("transform", "translate(0," + $.height + ")");
 
@@ -153,10 +155,10 @@ function stocks(div) {
 
       $.update_axis();
 
-      $.plot.select(".x.axis")
+      plot.select(".x.axis")
           .call($.x_axis);
 
-      $.plot.select(".y.axis")
+      plot.select(".y.axis")
           .call($.y_axis)
           .selectAll(".tick")
           .classed("tick-one", function(d){ return Math.abs(d-1) < 1e-6; });
@@ -169,7 +171,7 @@ function stocks(div) {
             .x(function(d){ return $.x(d.date) })
             .y(function(d){ return $.y(d[$.pre + curve]) });
 
-          $.plot.select("."+curve)
+          $.wrap.select("."+curve)
             .datum($.data)
             .attr("d", $[curve]);
       }
@@ -183,7 +185,7 @@ function stocks(div) {
           .y1(function(d){ return $.y(d[$.pre + "bollinger_upper"]) })
           .y0(function(d){ return $.y(d[$.pre + "bollinger_lower"]) });
 
-      $.plot.select(".bollinger")
+      $.wrap.select(".bollinger")
           .datum($.data)
           .attr("d", $.bollinger);
   }
@@ -197,10 +199,10 @@ function stocks(div) {
 
     // Définition de la zone de travail
 
-      var macd = $.plot.append("g")
-          .attr("class", "macd_box")
+      var macd = $.wrap.append("g")
+          .attr("class", "macd")
           .attr("transform", "translate(0," +
-              ($.svg_height + $.top - $.bottom) + ")");
+              ($.svg_height - $.padding + $.top + $.bottom) + ")");
 
       $.svg_height += $.padding + $.top;
 
@@ -286,14 +288,13 @@ function stocks(div) {
 
     // Définition de la zone de travail
 
-      var zoom = $.plot.append("g")
+      var zoom = $.wrap.append("g")
           .attr("class", "zoom")
           .attr("transform", "translate(0," +
-              ($.svg_height + $.top - $.bottom) + ")");
+              ($.svg_height - $.padding + $.top + $.bottom) + ")");
 
-      $.svg_height += $.padding + $.top;
-
-      $.svg.attr('viewBox','0 0 '+ $.svg_width +' '+ $.svg_height );
+      $.svg.attr('viewBox','0 0 ' + $.svg_width + ' '
+          + ($.svg_height + $.padding + $.top) );
 
 
     // Définition des courbes
@@ -324,7 +325,6 @@ function stocks(div) {
 
       $.brush = d3.svg.brush()
           .x(x_zoom);
-
 
       zoom.append("g")
           .attr("class", "x brush")
@@ -448,57 +448,80 @@ function stocks(div) {
 
     // Création de la ligne
 
-      $.focus = $.plot.append("g")
+      $.focus = $.wrap.append("g")
           .attr("class", "focus")
           .style("display", "none");
 
       $.focus.append("line")
-          .attr("y1", 10)
-          .attr("y2", $.svg_height - $.padding - $.bottom - $.top);
+          .attr("y1", 11)
+          .attr("y2", $.svg_height - $.bottom);
 
 
     // Création des textes
 
       var lgd = {}
 
-      var lgd_date = d3.select(div)
-          .insert("div",".stocks")
-          .attr("class", "lgd_date");
+      $.text = $.wrap.append("g")
+          .attr("class", "lgd");
 
-      var lgd_plot = d3.select(div)
-          .insert("div",".stocks")
+      var lgd_date = $.text.append("text")
+          .attr("class", "lgd_date")
+          .attr("x", $.width)
+          .attr("text-anchor", "end");
+
+      var lgd_value = $.text.append("text")
+          .attr("class", "lgd_value")
+          .attr("x", $.width)
+          .attr("y", 1.5 * 11)
+          .attr("text-anchor", "end");
+
+      var lgd_diff = $.text.append("text")
+          .attr("class", "lgd_diff")
+          .attr("x", $.width)
+          .attr("y", 2.5 * 11)
+          .attr("text-anchor", "end");
+
+      var lgd_triangle = lgd_diff.append("tspan")
+              .attr("class", "lgd_triangle");
+
+      var lgd_difference = lgd_diff.append("tspan")
+              .attr("dx", 0.5);
+
+      var lgd_plot = $.text.append("text")
           .attr("class", "lgd_plot")
-          .style("left", $.left + "px");
+          .attr("y", 0.5 * 11);
 
-      var lgd_ma = d3.select(div)
-          .insert("div",".stocks")
+      var lgd_ma = $.text.append("text")
           .attr("class", "lgd_ma")
           .style("left", $.left + "px")
-          .style("top", $.top + $.height + $.bottom + "px");
+          .attr("y", $.height + $.bottom + 0.5 * 11);
 
-      write_legend("price", "Fermeture", lgd_plot);
-      var lgd_diff = lgd_plot.append("span").attr("class", "val");
-      write_legend("ewma12", "EWMA12", lgd_plot);
-      write_legend("ewma26", "EWMA26", lgd_plot);
-      write_legend("bollinger", "Bollinger", lgd_plot);
+      write_legend("price", "", lgd_value);
+      write_legend("ewma12", "EWMA12 : ", lgd_plot);
+      write_legend("ewma26", "EWMA26 : ", lgd_plot);
+      write_legend("bollinger", "Bollinger : ", lgd_plot);
 
       if ($.macd) {
-          write_legend("macd", "MACD", lgd_ma);
-          write_legend("signal", "Signal", lgd_ma);
-          write_legend("div", "Divergence", lgd_ma);
+          write_legend("macd", "MACD : ", lgd_ma);
+          write_legend("signal", "Signal : ", lgd_ma);
+          write_legend("div", "Divergence : ", lgd_ma);
       }
 
       function write_legend(name, title, legend) {
-          legend.append("span").attr("class", "lgd").text(title + " : ");
-          lgd[name] = legend.append("span").attr("class", "val lgd_" + name);
+          legend.append("tspan")
+              .attr("class", "lgd_name")
+              .attr("dx", 11)
+              .text(title);
+          lgd[name] = legend.append("tspan")
+              .attr("class", "lgd_val lgd_" + name);
       }
 
     // Affichage des valeurs dynamiquement
 
-      $.plot.append("rect")
+      $.wrap.append("rect")
           .attr("class", "overlay")
           .attr("width", $.width)
-          .attr("height", $.svg_height - $.padding - $.bottom - $.top);
+          .attr("height", $.svg_height - $.bottom);
 
       default_legends();
 
@@ -528,13 +551,15 @@ function stocks(div) {
       function update_legends(d, y) {
 
           var evol = !!y ? (d.price - y.price) / y.price * 100 : 0,
-              evolc = evol > 0 ? ' plus' : (evol < 0 ? ' minus': '');
+              evolc = evol > 0 ? ' plus' : (evol < 0 ? ' minus': ''),
+              evols = evol > 0 ? '▲ ' : (evol < 0 ? '▼ ': '◼ ');
 
           lgd_date.text(fr_time(d.date));
-          lgd['price'].text(fr_digit(d.price));
+          lgd['price'].text(fr_digit(d.price) + " €");
 
-          lgd_diff.text(fr_digit(evol).replace('-','')+" %");
-          lgd_diff.attr("class", "val evol" + evolc);
+          lgd_diff.attr("class", "lgd_diff" + evolc)
+          lgd_triangle.text(evols);
+          lgd_difference.text(fr_digit(evol).replace('-','')+" %");
 
           lgd['ewma12'].text(fr_digit(d.ewma12));
           lgd['ewma26'].text(fr_digit(d.ewma26));
@@ -569,14 +594,14 @@ function stocks(div) {
 
       $.update_axis();
 
-      $.plot.select(".y.axis").call($.y_axis);
+      $.wrap.select(".y.axis").call($.y_axis);
 
       for (var c in $.curves) {
-          animate($.plot.select("."+$.curves[c]))
+          animate($.wrap.select("."+$.curves[c]))
           .attr("d", $[$.curves[c]]);
       }
 
-      animate($.plot.select(".bollinger"))
+      animate($.wrap.select(".bollinger"))
           .attr("d", $.bollinger);
 
       if (!!$.y_macd) {

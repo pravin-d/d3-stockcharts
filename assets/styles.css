@@ -25,13 +25,13 @@ body {
   fill: steelblue;
   fill-opacity: 0.2;
   stroke: steelblue;
-  stroke-opacity: 0.5;;
+  stroke-opacity: 0.5;
 }
 
 path {
   fill: none;
   stroke: black;
-  stroke-opacity: 0.4;;
+  stroke-opacity: 0.4;
 }
 
 .axis path,
@@ -48,17 +48,13 @@ path {
   stroke-width: 1.5px;
 }
 
-.lgd_price {
-  color: #777;
-}
-
 .plot path.ewma12 {
   stroke: rgb(240, 128, 128);
   stroke-opacity: 0.7;
 }
 
 .lgd_ewma12 {
-  color: rgba(240, 128, 128, 0.7);
+  fill: rgba(240, 128, 128, 0.7);
 }
 
 .plot path.ewma26 {
@@ -67,7 +63,7 @@ path {
 }
 
 .lgd_ewma26 {
-  color: rgba(70, 130, 180, 0.5);
+  fill: rgba(70, 130, 180, 0.5);
 }
 
 .plot .bollinger {
@@ -76,10 +72,37 @@ path {
   stroke: none;
 }
 
-.lgd_bollinger {
-  background-color: rgba(0,0,0, 0.06);
+
+/* Légendes */
+
+.lgd_date {
+  font-style: italic;
+  fill: #CCC;
+  font-size: 1.1em;
+  font-weight: bold;
 }
 
+.lgd_value, .lgd_diff, .lgd_name, .lgd_val {
+  font-weight: bold;
+}
+
+.lgd_diff {
+  fill: #BBB;
+  dominant-baseline: central;
+}
+
+.lgd_plot, .lgd_diff, .lgd_triangle, .lgd_ma {
+  font-size: 0.85em;
+}
+
+.lgd_plot, .lgd_ma {
+  viewport-fill: #bf1f1f;
+  fill: #BBB;
+}
+
+.lgd_bollinger {
+  fill: #CCC;
+}
 
 /* Courbes du module MACD */
 
@@ -89,7 +112,7 @@ path.macd {
 }
 
 .lgd_macd {
-  color: rgba(240, 128, 128, 0.5);
+  fill: rgba(240, 128, 128, 0.5);
 }
 
 path.signal {
@@ -98,7 +121,7 @@ path.signal {
 }
 
 .lgd_signal {
-  color: rgba(70, 130, 180, 0.5);
+  fill: rgba(70, 130, 180, 0.5);
 }
 
 .positif {
@@ -108,7 +131,7 @@ path.signal {
 }
 
 .plus {
-  color: rgba(0, 128, 0, 0.5);
+  fill: rgba(0, 128, 0, 0.5);
 }
 
 .negatif {
@@ -118,7 +141,7 @@ path.signal {
 }
 
 .minus {
-  color: rgba(178, 34, 34, 0.5);
+  fill: rgba(178, 34, 34, 0.5);
 }
 
 
@@ -142,56 +165,6 @@ path.signal {
 .focus line {
   stroke: black;
   stroke-opacity: 0.2;
-}
-
-
-/* Textes */
-
-#stocks div {
-  position: absolute;
-  font-size: 1.05em;
-  color: #AAA;
-  line-height: 1.5;
-}
-
-.lgd, .ldg_diff {
-  margin: 0 5px 0 15px;
-  font-weight: bold;
-  display: inline-block;
-}
-
-.val {
-  display: inline-block;
-  min-width: 2.5em;
-  text-align: right;
-}
-.lgd_plot .evol {
-  margin-left: 10px;
-}
-
-.lgd_plot .evol:before {
-  content: '∼';
-  width: 1.5em;
-  text-align: center;
-  display: inline-block;
-}
-
-.lgd_plot .evol.plus:before {
-  content: '▲';
-}
-
-.lgd_plot .evol.minus:before {
-  content: '▼';
-}
-
-.lgd_date {
-  top: 5px;
-  right: 0;
-  margin-right: 20px;
-}
-
-.lgd_plot, .lgd_ma {
-  top: 5px;
 }
 
 
