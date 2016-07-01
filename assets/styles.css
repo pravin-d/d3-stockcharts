@@ -11,6 +11,11 @@ body {
   font-size: 0.75em;
   cursor: default;
   margin: 0 auto;
+
+  user-select: none;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
 }
 
 
@@ -85,6 +90,25 @@ path.signal {
   fill: rgb(178, 34, 34);
   fill-opacity: 0.7;
   stroke: none;
+}
+
+
+/* Sélecteur */
+
+.selecteur {
+  font-size: 0.95em;
+  font-weight: normal;
+  fill: #BBBBBB;
+}
+
+.selecteur {
+  cursor: pointer;
+}
+
+.relative .relative, .absolute .absolute {
+  font-size: 1.2em;
+  font-weight: bold;
+  fill: #111111;
 }
 
 

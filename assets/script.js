@@ -28,7 +28,7 @@ function stocks(div) {
       $.left    =  40;
       $.right   =  20;
       $.padding = 100;
-  }
+   }
 
 
   // Chargement des données et affichage par défaut
@@ -73,52 +73,73 @@ function stocks(div) {
   // Affichage du graphique
   // ----------------------
 
-  this.draw_plot = function() {
+  this.draw_plot = function(update) {
 
-    // Définition des échelles
+      if (update === undefined) {
 
-      $.x  = d3.time.scale().range([0, $.width]);
-      $.x_axis = d3.svg.axis().scale($.x)
-          .orient("bottom").tickFormat(fr_axis);
+        // Définition des échelles
 
-
-    // Création de l'espace de travail
-
-      $.svg_width = $.width + $.left + $.right,
-      $.svg_height = $.height + $.top + $.bottom;
-
-      $.svg = d3.select(div)
-          .append("svg")
-          .attr("width", "100%")
-          .attr("height", "100%")
-          .attr('viewBox','0 0 '+ $.svg_width +' '+ $.svg_height)
-
-      $.svg.append("defs").append("clipPath")
-          .attr("id", "clip")
-          .append("rect")
-          .attr("width", $.width)
-          .attr("height", $.top + $.height + $.bottom);
-
-      $.wrap = $.svg.append("g")
-          .attr("class", "wrap")
-          .attr("transform", "translate(" + $.left + "," + $.top + ")");
-
-      var plot = $.wrap.append("g")
-          .attr("class", "div_plot");
+          $.x  = d3.time.scale().range([0, $.width]);
+          $.x_axis = d3.svg.axis().scale($.x)
+              .orient("bottom").tickFormat(fr_axis);
 
 
-    // Créations des courbes
+        // Création de l'espace de travail
 
-      for (var c in $.curves) {
-        plot.append("path")
-            .attr("class", $.curves[c])
-            .style("clip-path", " url(#clip)");
+          $.svg_width = $.width + $.left + $.right,
+          $.svg_height = $.height + $.top + $.bottom;
+
+          $.svg = d3.select(div)
+              .append("svg")
+              .attr("width", "100%")
+              .attr("height", "100%")
+              .attr('viewBox','0 0 '+ $.svg_width +' '+ $.svg_height)
+
+          $.svg.append("defs").append("clipPath")
+              .attr("id", "clip")
+              .append("rect")
+              .attr("width", $.width)
+              .attr("height", $.top + $.height + $.bottom);
+
+          $.wrap = $.svg.append("g")
+              .attr("class", "wrap")
+              .attr("transform", "translate(" + $.left + "," + $.top + ")");
+
+          var plot = $.wrap.append("g")
+              .attr("class", "div_plot");
+
+
+        // Créations des courbes
+
+          for (var c in $.curves) {
+            plot.append("path")
+                .attr("class", $.curves[c])
+                .style("clip-path", " url(#clip)");
+          }
+
+          plot.append("path")
+              .attr("class", "bollinger")
+              .style("clip-path", " url(#clip)")
+
+
+        // Affichage du sélecteur
+
+        var selecteur = plot.append("text")
+            .attr("class", "selecteur absolute")
+            .attr("x", -$.left + 13)
+            .attr("y", -7)
+            .on("click", function() {
+                var type = ($.type == "relative") ? "absolute" : "relative";
+                $.type = type;
+                $.draw_plot("update");
+                selecteur.attr("class", "selecteur " + type);
+            });
+
+        selecteur.append("tspan").attr("class", "absolute").text("€");
+        selecteur.append("tspan").text(" / ");
+        selecteur.append("tspan").attr("class", "relative").text("%");
+
       }
-
-      plot.append("path")
-          .attr("class", "bollinger")
-          .style("clip-path", " url(#clip)")
-
 
     // Calcul des données
 
@@ -130,6 +151,8 @@ function stocks(div) {
 
 
     // Créations et affichage des axes
+
+      var plot = $.svg.select(".div_plot")
 
       plot.append("g")
           .attr("class", "y axis");
