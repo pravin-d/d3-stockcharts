@@ -89,7 +89,6 @@ function stocks(div) {
 
       $.svg = d3.select(div)
           .append("svg")
-          .attr("class", "plot")
           .attr("width", "100%")
           .attr("height", "100%")
           .attr('viewBox','0 0 '+ $.svg_width +' '+ $.svg_height)
@@ -105,7 +104,7 @@ function stocks(div) {
           .attr("transform", "translate(" + $.left + "," + $.top + ")");
 
       var plot = $.wrap.append("g")
-          .attr("class", "plot");
+          .attr("class", "div_plot");
 
 
     // Créations des courbes
@@ -150,7 +149,8 @@ function stocks(div) {
 
       else {
         $.y = d3.scale.linear().range([$.height, 0]);
-        $.y_axis = d3.svg.axis().scale($.y).orient("left").tickSize(-$.width, 0);
+        $.y_axis = d3.svg.axis().scale($.y).orient("left")
+            .tickSize(-$.width, 0);
       }
 
       $.update_axis();
@@ -200,7 +200,7 @@ function stocks(div) {
     // Définition de la zone de travail
 
       var macd = $.wrap.append("g")
-          .attr("class", "macd")
+          .attr("class", "div_macd")
           .attr("transform", "translate(0," +
               ($.svg_height - $.padding + $.top + $.bottom) + ")");
 
@@ -289,7 +289,7 @@ function stocks(div) {
     // Définition de la zone de travail
 
       var zoom = $.wrap.append("g")
-          .attr("class", "zoom")
+          .attr("class", "div_zoom")
           .attr("transform", "translate(0," +
               ($.svg_height - $.padding + $.top + $.bottom) + ")");
 
@@ -420,7 +420,7 @@ function stocks(div) {
           ens = [];
 
       function val(d) {
-          return (d.date >= $.ext[0] && d.date <= $.ext[1]) ? d[key] : undefined;
+          return (d.date >= $.ext[0] && d.date <= $.ext[1]) ? d[key]:undefined;
       }
 
       if (!$.init_ext && (key == "macd" || !$.brush || $.brush.empty())) {
@@ -453,7 +453,7 @@ function stocks(div) {
           .style("display", "none");
 
       $.focus.append("line")
-          .attr("y1", 11)
+          .attr("y1", 0)
           .attr("y2", $.svg_height - $.bottom);
 
 
@@ -462,23 +462,27 @@ function stocks(div) {
       var lgd = {}
 
       $.text = $.wrap.append("g")
-          .attr("class", "lgd");
+          .attr("class", "lgd")
+          .attr("transform", "translate(0, 5)");
 
       var lgd_date = $.text.append("text")
           .attr("class", "lgd_date")
           .attr("x", $.width)
+          .attr("y", -5)
           .attr("text-anchor", "end");
 
       var lgd_value = $.text.append("text")
           .attr("class", "lgd_value")
           .attr("x", $.width)
-          .attr("y", 1.5 * 11)
+          .attr("y", 11)
           .attr("text-anchor", "end");
+
+      write_legend("price", "", lgd_value);
 
       var lgd_diff = $.text.append("text")
           .attr("class", "lgd_diff")
           .attr("x", $.width)
-          .attr("y", 2.5 * 11)
+          .attr("y", 2 * 11)
           .attr("text-anchor", "end");
 
       var lgd_triangle = lgd_diff.append("tspan")
@@ -489,19 +493,18 @@ function stocks(div) {
 
       var lgd_plot = $.text.append("text")
           .attr("class", "lgd_plot")
-          .attr("y", 0.5 * 11);
+          .attr("y", 5);
 
-      var lgd_ma = $.text.append("text")
-          .attr("class", "lgd_ma")
-          .style("left", $.left + "px")
-          .attr("y", $.height + $.bottom + 0.5 * 11);
-
-      write_legend("price", "", lgd_value);
       write_legend("ewma12", "EWMA12 : ", lgd_plot);
       write_legend("ewma26", "EWMA26 : ", lgd_plot);
       write_legend("bollinger", "Bollinger : ", lgd_plot);
 
       if ($.macd) {
+          var lgd_ma = $.text.append("text")
+              .attr("class", "lgd_ma")
+              .style("left", $.left + "px")
+              .attr("y", $.height + $.bottom + 5);
+
           write_legend("macd", "MACD : ", lgd_ma);
           write_legend("signal", "Signal : ", lgd_ma);
           write_legend("div", "Divergence : ", lgd_ma);
@@ -510,13 +513,13 @@ function stocks(div) {
       function write_legend(name, title, legend) {
           legend.append("tspan")
               .attr("class", "lgd_name")
-              .attr("dx", 11)
+              .attr("dx", 8)
               .text(title);
           lgd[name] = legend.append("tspan")
               .attr("class", "lgd_val lgd_" + name);
       }
 
-    // Affichage des valeurs dynamiquement
+    // Affichage des valeurs au survol
 
       $.wrap.append("rect")
           .attr("class", "overlay")

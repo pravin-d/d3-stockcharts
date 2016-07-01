@@ -11,7 +11,6 @@ body {
   font-size: 0.75em;
   cursor: default;
   margin: 0 auto;
-
 }
 
 
@@ -41,34 +40,50 @@ path {
 }
 
 
-
 /* Courbes du graphique principal */
 
-.plot path.price {
+.div_plot path.price {
   stroke-width: 1.5px;
 }
 
-.plot path.ewma12 {
+.div_plot path.ewma12 {
   stroke: rgb(240, 128, 128);
   stroke-opacity: 0.7;
 }
 
-.lgd_ewma12 {
-  fill: rgba(240, 128, 128, 0.7);
-}
-
-.plot path.ewma26 {
+.div_plot path.ewma26 {
   stroke: rgb(70, 130, 180);
   stroke-opacity: 0.5;
 }
 
-.lgd_ewma26 {
-  fill: rgba(70, 130, 180, 0.5);
-}
-
-.plot .bollinger {
+.div_plot .bollinger {
   fill: black;
   fill-opacity: 0.06;
+  stroke: none;
+}
+
+
+/* Courbes du module MACD */
+
+path.macd {
+  stroke: rgb(240, 128, 128);
+  stroke-opacity: 0.3;
+}
+
+path.signal {
+  stroke: rgb(70, 130, 180);
+  stroke-opacity: 0.3;
+}
+
+.positif {
+  fill: rgb(0, 128, 0) ;
+  fill-opacity: 0.7;
+  stroke: none;
+}
+
+.negatif {
+  fill: rgb(178, 34, 34);
+  fill-opacity: 0.7;
   stroke: none;
 }
 
@@ -77,7 +92,7 @@ path {
 
 .lgd_date {
   font-style: italic;
-  fill: #CCC;
+  fill: #CCCCCC;
   font-size: 1.1em;
   font-weight: bold;
 }
@@ -87,7 +102,7 @@ path {
 }
 
 .lgd_diff {
-  fill: #BBB;
+  fill: #BBBBBB;
   dominant-baseline: central;
 }
 
@@ -96,48 +111,31 @@ path {
 }
 
 .lgd_plot, .lgd_ma {
-  viewport-fill: #bf1f1f;
-  fill: #BBB;
+  fill: #BBBBBB;
 }
 
 .lgd_bollinger {
-  fill: #CCC;
+  fill: #CCCCCC;
 }
 
-/* Courbes du module MACD */
+.lgd_ewma12 {
+  fill: rgba(240, 128, 128, 0.7);
+}
 
-path.macd {
-  stroke: rgb(240, 128, 128);
-  stroke-opacity: 0.3;
+.lgd_ewma26 {
+  fill: rgba(70, 130, 180, 0.5);
 }
 
 .lgd_macd {
   fill: rgba(240, 128, 128, 0.5);
 }
 
-path.signal {
-  stroke: rgb(70, 130, 180);
-  stroke-opacity: 0.3;
-}
-
 .lgd_signal {
   fill: rgba(70, 130, 180, 0.5);
 }
 
-.positif {
-  fill: rgb(0, 128, 0) ;
-  fill-opacity: 0.7;
-  stroke: none;
-}
-
 .plus {
   fill: rgba(0, 128, 0, 0.5);
-}
-
-.negatif {
-  fill: rgb(178, 34, 34);
-  fill-opacity: 0.7;
-  stroke: none;
 }
 
 .minus {
@@ -145,8 +143,7 @@ path.signal {
 }
 
 
-
-
+/* Divers */
 
 .brush .extent {
   stroke: #bbb;
