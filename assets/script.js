@@ -232,7 +232,7 @@ function stocks(div) {
     // Définition des axes
 
       $.y_macd = d3.scale.linear().range([$.padding, 0]);
-      $.y_macd.domain($.compute_domain("macd"));
+      $.y_macd.domain($.compute_domain(["macd", "signal", "div"]));
       $.y_macd_axis = d3.svg.axis()
           .scale($.y_macd)
           .orient("left")
@@ -412,7 +412,9 @@ function stocks(div) {
 
       if ($.type == "relative") {
         $.y = d3.scale.log().range([$.height, 0]);
-        $.y.domain($.compute_domain($.pre + "price"));
+        $.y.domain($.compute_domain([$.pre + "price", $.pre + "emwa12",
+              $.pre + "emwa26",  $.pre + "bollinger_lower",
+              $.pre + "bollinger_upper"]));
         var y_axis = d3.svg.axis()
             .scale($.y)
             .orient("left")
@@ -423,7 +425,9 @@ function stocks(div) {
 
       else {
         $.y = d3.scale.linear().range([$.height, 0]);
-        $.y.domain($.compute_domain($.pre + "price"));
+        $.y.domain($.compute_domain(([$.pre + "price", $.pre + "emwa12",
+              $.pre + "emwa26",  $.pre + "bollinger_lower",
+              $.pre + "bollinger_upper"])));
         y_axis = d3.svg.axis().scale($.y).orient("left")
             .tickSize(-$.width, 0);
       }
@@ -436,27 +440,36 @@ function stocks(div) {
   // Calcul des domaines
   // -------------------
 
-  this.compute_domain = function(key) {
-      var dom = d3.extent($.data.map(function(d){ return d[key] })),
-          ens = [];
+  this.compute_domain = function(keys) {
+
+      var ext = [],
+          Δ = 0.15;
 
       function val(d) {
-          return (d.date >= $.ext[0] && d.date <= $.ext[1])?d[key]:undefined;
+          return (d.date >= $.ext[0] && d.date
+              <= $.ext[1]) ? d[keys[k]] : undefined;
       }
 
-      if (!$.init_ext && (key == "macd" || !$.brush || $.brush.empty())) {
-        ens = dom;
-      }
+      for (var k in keys) {
+        var dom = d3.extent($.data.map(function(d){ return d[keys[k]] })),
+            ens = dom;
 
-      else {
-        ens = d3.extent($.data.map(val));
-        if ($.type != "relative") {
-          ens = [(4 * ens[0] + dom[0])/5, (4 * ens[1] + dom[1])/5];
+        if (keys[0] != "macd") {
+          ens = d3.extent($.data.map(val));
+
+          if (keys[0].substring(0, 6) != "ratio_") {
+            ens = [(4 * ens[0] + dom[0])/5, (4 * ens[1] + dom[1])/5];
+            Δ = 0;
+          }
         }
+
+        console.log(keys[k] + " : " + ens[0] + " ; " + ens[1])
+
+        ext[0] = !!ext[0] ? Math.min(ext[0], ens[0] - Δ) : ens[0] - Δ;
+        ext[1] = !!ext[1] ? Math.max(ext[1], ens[1] + Δ) : ens[1] + Δ;
       }
 
-      var Δ = (ens[1] - ens[0]) * 0.1;
-      return [ens[0] - Δ, ens[1] + Δ];
+      return ext;
   };
 
 
