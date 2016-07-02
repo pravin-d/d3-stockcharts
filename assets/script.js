@@ -80,8 +80,6 @@ function stocks(div) {
         // Définition des échelles
 
           $.x  = d3.time.scale().range([0, $.width]);
-          $.x_axis = d3.svg.axis().scale($.x)
-              .orient("bottom").tickFormat(fr_axis);
 
 
         // Création de l'espace de travail
@@ -161,31 +159,7 @@ function stocks(div) {
           .attr("class", "x axis")
           .attr("transform", "translate(0," + $.height + ")");
 
-      if ($.type == "relative") {
-        $.y = d3.scale.log().range([$.height, 0]);
-        $.y_axis = d3.svg.axis()
-            .scale($.y)
-            .orient("left")
-            .tickSize(-$.width, 0)
-            .tickFormat(function(x) { return d3.format("+.0%")(x - 1); });
-      }
-
-      else {
-        $.y = d3.scale.linear().range([$.height, 0]);
-        $.y_axis = d3.svg.axis().scale($.y).orient("left")
-            .tickSize(-$.width, 0);
-      }
-
       $.update_axis();
-
-      plot.select(".x.axis")
-          .call($.x_axis);
-
-      plot.select(".y.axis")
-          .call($.y_axis)
-          .selectAll(".tick")
-          .classed("tick-one", function(d){ return Math.abs(d-1) < 1e-6; });
-
 
     // Calcul des courbes
 
@@ -314,7 +288,7 @@ function stocks(div) {
       var zoom = $.wrap.append("g")
           .attr("class", "div_zoom")
           .attr("transform", "translate(0," +
-              ($.svg_height - $.padding + $.top + $.bottom) + ")");
+              ($.svg_height - $.padding + $.bottom) + ")");
 
       $.svg.attr('viewBox','0 0 ' + $.svg_width + ' '
           + ($.svg_height + $.padding + $.top) );
@@ -398,7 +372,7 @@ function stocks(div) {
 
   this.update_axis = function() {
 
-    // Calcul de l'axe horizontal
+    // Calcul de l'espace de départ
 
       if ($.init_ext) {
           $.ext = $.init_ext;
@@ -423,14 +397,38 @@ function stocks(div) {
             basevalue = $.data.find(function (d)
                                   {return d.date == basedate; }).price;
 
-        $.y_axis.tickValues(d3.scale.linear().domain($.y.domain()).ticks(8));
         $.compute_ratio(basevalue);
+
       }
 
+    // Calcul de l'axe horizontal
 
-    // Calcul des axes verticaux
+      var x_axis = d3.svg.axis().scale($.x)
+          .orient("bottom").tickFormat(fr_axis);
 
-      $.y.domain($.compute_domain($.pre + "price"));
+      $.svg.select(".div_plot .x.axis").call(x_axis);
+
+    // Calcul de l'axe vertical
+
+      if ($.type == "relative") {
+        $.y = d3.scale.log().range([$.height, 0]);
+        $.y.domain($.compute_domain($.pre + "price"));
+        var y_axis = d3.svg.axis()
+            .scale($.y)
+            .orient("left")
+            .tickSize(-$.width, 0)
+            .tickFormat(function(x) { return d3.format("+.0%")(x - 1); })
+            .tickValues(d3.scale.linear().domain($.y.domain()).ticks(5));
+      }
+
+      else {
+        $.y = d3.scale.linear().range([$.height, 0]);
+        $.y.domain($.compute_domain($.pre + "price"));
+        y_axis = d3.svg.axis().scale($.y).orient("left")
+            .tickSize(-$.width, 0);
+      }
+
+      $.svg.select(".div_plot .y.axis").call(y_axis);
   };
 
 
@@ -618,8 +616,6 @@ function stocks(div) {
       }
 
       $.update_axis();
-
-      $.wrap.select(".y.axis").call($.y_axis);
 
       for (var c in $.curves) {
           animate($.wrap.select("."+$.curves[c]))
