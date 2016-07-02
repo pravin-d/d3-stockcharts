@@ -167,6 +167,20 @@ path.signal {
 }
 
 
+/* Sélecteur de date */
+
+.range {
+  font-size: 1.1em;
+  fill: #888888;
+  cursor: pointer;
+}
+
+.range .active {
+  fill: #000000;
+  font-weight: bold;
+}
+
+
 /* Divers */
 
 .brush .extent {

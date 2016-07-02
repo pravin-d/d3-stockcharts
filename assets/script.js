@@ -347,6 +347,25 @@ function stocks(div) {
       }
 
       $.brush.on("brush", $.brushed);
+
+
+    // Affichage des dates
+
+    var options = ["max", "10a", "5a", "2a", "1a", "6m"],
+        range = zoom.append("text")
+            .attr("x", 10)
+            .attr("y", 15)
+            .attr("class", "range");
+
+    for (var i in options) {
+      range.append("tspan").text(" ");
+      range.append("tspan")
+          .attr("class", "range_" + options[i])
+          .text(options[i])
+          .on("click", function(){$.set_zoom(d3.select(this).text())});
+      range.append("tspan").text("  ");
+    }
+
   };
 
 
@@ -488,7 +507,7 @@ function stocks(div) {
 
       $.focus.append("line")
           .attr("y1", 0)
-          .attr("y2", $.svg_height - $.bottom);
+          .attr("y2", $.svg_height - $.padding + $.bottom);
 
 
     // Création des textes
@@ -558,7 +577,7 @@ function stocks(div) {
       $.wrap.append("rect")
           .attr("class", "overlay")
           .attr("width", $.width)
-          .attr("height", $.svg_height - $.bottom);
+          .attr("height", $.svg_height - $.padding + $.bottom);
 
       default_legends();
 
@@ -619,9 +638,11 @@ function stocks(div) {
   // Mise à jour du sélecteur
   // ------------------------
 
-  this.brushed = function(transition) {
+  this.brushed = function() {
 
       $.update_axis();
+
+      d3.selectAll(".range tspan").classed("active", 0);
 
       for (var c in $.curves) {
           $.wrap.select("."+$.curves[c])
@@ -665,24 +686,34 @@ function stocks(div) {
           start = new Date($.data[$.data.length - 1].date),
           arg = /(\d+)(.)/.exec(time);
 
-      if (arg[2] == 'm') {
-        start.setMonth(start.getMonth() - arg[1]);
-      }
+      if (!!arg) {
+        if (arg[2] == 'm') {
+          start.setMonth(start.getMonth() - arg[1]);
+        }
 
-      if (arg[2] == 'y' || arg[2] == 'a') {
-        start.setFullYear(start.getFullYear() - arg[1]);
-      }
+        if (arg[2] == 'y' || arg[2] == 'a') {
+          start.setFullYear(start.getFullYear() - arg[1]);
+        }
 
-      if (!!$.brush) {
-        $.brush.extent([start, today]);
-        $.brushed(1);
-        d3.select('.div_zoom .x.brush')
-            .call($.brush.extent([start, today]));
+        if (!!$.brush) {
+          $.brush.extent([start, today]);
+          $.brushed();
+          d3.select('.div_zoom .x.brush').call($.brush.extent([start,today]));
+        }
+
+        else {
+          $.init_ext = [start, today];
+        }
       }
 
       else {
-        $.init_ext = [start, today];
+        $.brush.extent(d3.extent($.data.map(function(d){ return d.date })));
+        $.brushed();
+        d3.select('.div_zoom .x.brush').call($.brush.clear());
       }
+
+      d3.selectAll(".range tspan").classed("active", 0);
+      d3.select(".range_" + time).classed("active", 1);
 
   };
 
