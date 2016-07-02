@@ -432,7 +432,10 @@ function stocks(div) {
             .tickSize(-$.width, 0);
       }
 
-      $.svg.select(".div_plot .y.axis").call(y_axis);
+      $.svg.select(".div_plot .y.axis").call(y_axis)
+          .selectAll(".tick")
+          .classed("tick-one", function(d){ return Math.abs(d-1) < 1e-6; });
+
   };
 
 
