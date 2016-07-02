@@ -262,14 +262,14 @@ function stocks(div) {
           .attr("id", "positif")
           .append("path")
           .attr("d", $.div.y1(function(d){
-            return Math.min($.y_macd(0), $.y_macd(1.5 * d.div)) }));
+            return Math.min($.y_macd(0), $.y_macd(d.div)) }));
 
       macd.datum($.data)
           .append("clipPath")
           .attr("id", "negatif")
           .append("path")
           .attr("d", $.div.y1(function(d){
-            return Math.max($.y_macd(0), $.y_macd(1.5 * d.div)) }));
+            return Math.max($.y_macd(0), $.y_macd(d.div)) }));
 
       macd.select("path.macd").attr("d", $.macd);
       macd.select("path.signal").attr("d", $.signal);
@@ -466,8 +466,6 @@ function stocks(div) {
           }
         }
 
-        console.log(keys[k] + " : " + ens[0] + " ; " + ens[1])
-
         ext[0] = !!ext[0] ? Math.min(ext[0], ens[0] - Δ) : ens[0] - Δ;
         ext[1] = !!ext[1] ? Math.max(ext[1], ens[1] + Δ) : ens[1] + Δ;
       }
@@ -623,38 +621,30 @@ function stocks(div) {
 
   this.brushed = function(transition) {
 
-      function animate(fun) {
-        if (transition == 1) {
-          return fun.transition().duration(750);
-        }
-
-        return fun;
-      }
-
       $.update_axis();
 
       for (var c in $.curves) {
-          animate($.wrap.select("."+$.curves[c]))
+          $.wrap.select("."+$.curves[c])
               .attr("d", $[$.curves[c]]);
       }
 
-      animate($.wrap.select(".bollinger"))
+      $.wrap.select(".bollinger")
           .attr("d", $.bollinger);
 
       if (!!$.y_macd) {
 
-        animate(d3.select("#positif path"))
+        d3.select("#positif path")
             .attr("d", $.div.y1(function(d){
-              return Math.min($.y_macd(0), $.y_macd(1.5 * d.div)); }));
+              return Math.min($.y_macd(0), $.y_macd(d.div)); }));
 
-        animate(d3.select("#negatif path"))
+        d3.select("#negatif path")
             .attr("d", $.div.y1(function(d){
-              return Math.max($.y_macd(0), $.y_macd(1.5 * d.div)); }));
+              return Math.max($.y_macd(0), $.y_macd(d.div)); }));
 
-        animate(d3.select(".macd"))
+        d3.select(".macd")
             .attr("d", $.macd);
 
-        animate(d3.select(".signal"))
+        d3.select(".signal")
             .attr("d", $.signal);
 
         $.div = d3.svg.area()
@@ -687,8 +677,6 @@ function stocks(div) {
         $.brush.extent([start, today]);
         $.brushed(1);
         d3.select('.div_zoom .x.brush')
-            .transition()
-            .duration($.brush.empty() ? 0 : 0)
             .call($.brush.extent([start, today]));
       }
 
