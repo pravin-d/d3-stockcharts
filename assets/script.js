@@ -310,7 +310,7 @@ function stocks(div) {
       var y_zoom = d3.scale.linear().range([$.padding, 0]);
 
       x_zoom.domain(d3.extent($.data.map(function(d){ return d.date })));
-      y_zoom.domain(d3.extent($.data.map(function(d){ return d.price })));
+      y_zoom.domain([0, d3.max($.data.map(function(d){ return d.price }))]);
 
       zoom.append("g")
           .attr("class", "x_zoom axis")
@@ -465,7 +465,7 @@ function stocks(div) {
   this.compute_domain = function(keys) {
 
       var ext = [],
-          Δ = 0.15;
+          Δ = 0.4;
 
       function val(d) {
           return (d.date >= $.ext[0] && d.date
@@ -481,12 +481,11 @@ function stocks(div) {
 
           if (keys[0].substring(0, 6) != "ratio_") {
             ens = [(4 * ens[0] + dom[0])/5, (4 * ens[1] + dom[1])/5];
-            Δ = 0;
           }
         }
 
-        ext[0] = !!ext[0] ? Math.min(ext[0], ens[0] - Δ) : ens[0] - Δ;
-        ext[1] = !!ext[1] ? Math.max(ext[1], ens[1] + Δ) : ens[1] + Δ;
+        ext[0] = !!ext[0] ? Math.min(ext[0], ens[0] * (1-Δ)) : ens[0] * (1-Δ);
+        ext[1] = !!ext[1] ? Math.max(ext[1], ens[1] * (1+Δ)) : ens[1] * (1+Δ);
       }
 
       return ext;
