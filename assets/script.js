@@ -42,10 +42,10 @@ function stocks(div) {
 
       d3.csv('data/isin/' + isin + '.csv', function(err, data) {
           $.read(err, data);
-          $.set_zoom("1a");
           $.draw_plot();
           $.draw_macd();
           $.draw_zoom();
+          $.set_zoom("1a");
           $.show_data();
       });
   };
@@ -639,9 +639,9 @@ function stocks(div) {
 
   this.brushed = function() {
 
-      $.update_axis();
-
       d3.selectAll(".range tspan").classed("active", 0);
+
+      $.update_axis();
 
       for (var c in $.curves) {
           $.wrap.select("."+$.curves[c])
@@ -672,6 +672,10 @@ function stocks(div) {
             .y0($.y_macd(0));
       }
 
+      if (!$.brush || $.brush.empty()) {
+        $.ext = d3.extent($.data.map(function(d){ return d.date }));
+        d3.select(".range_max").classed("active", 1);
+      }
   };
 
 
