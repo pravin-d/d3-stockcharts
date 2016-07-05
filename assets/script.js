@@ -439,7 +439,7 @@ function stocks(div) {
             .orient("left")
             .tickSize(-$.width, 0)
             .tickFormat(function(x) { return d3.format("+.0%")(x - 1); })
-            .tickValues(d3.scale.linear().domain($.y.domain()).ticks(5));
+            .tickValues(d3.scale.linear().domain($.y.domain()).ticks(7));
       }
 
       else {
@@ -465,7 +465,7 @@ function stocks(div) {
   this.compute_domain = function(keys) {
 
       var ext = [],
-          Δ = 0.4;
+          Δ = 0.1;
 
       function val(d) {
           return (d.date >= $.ext[0] && d.date

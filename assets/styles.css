@@ -193,7 +193,7 @@ path.signal {
 }
 
 .axis.y .tick:not(.tick-one) line {
-  stroke-opacity: .1;
+  stroke-opacity: .05;
 }
 
 .overlay {
