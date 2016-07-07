@@ -47,7 +47,7 @@ path {
 
 /* Courbes du graphique principal */
 
-.div_plot path.price {
+.div_plot path.close {
   stroke-width: 1.5px;
 }
 

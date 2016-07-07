@@ -16,7 +16,7 @@ function stocks(div) {
 
     // Courbes à afficher sur le graphique
 
-      $.curves = ["ewma12", "ewma26", "price"];
+      $.curves = ["ewma12", "ewma26", "close"];
 
 
     // Modèles de boîtes
@@ -142,7 +142,7 @@ function stocks(div) {
     // Calcul des données
 
       if ($.type == "relative") {
-        $.compute_ratio($.data[0].price);
+        $.compute_ratio($.data[0].close);
       }
 
       $.pre = ($.type == "relative") ? "ratio_" : "";
@@ -310,7 +310,7 @@ function stocks(div) {
       var y_zoom = d3.scale.linear().range([$.padding, 0]);
 
       x_zoom.domain(d3.extent($.data.map(function(d){ return d.date })));
-      y_zoom.domain([0, d3.max($.data.map(function(d){ return d.price }))]);
+      y_zoom.domain([0, d3.max($.data.map(function(d){ return d.close }))]);
 
       zoom.append("g")
           .attr("class", "x_zoom axis")
@@ -333,7 +333,7 @@ function stocks(div) {
           .datum($.data)
           .attr("d", d3.svg.area()
               .x(function(d){ return x_zoom(d.date) })
-              .y1(function(d){ return y_zoom(d.price) })
+              .y1(function(d){ return y_zoom(d.close) })
               .y0($.padding));
 
 
@@ -414,7 +414,7 @@ function stocks(div) {
         var basedate = d3.min($.data.map(function(d)
                                 {if (d.date >= $.ext[0]) return d.date})),
             basevalue = $.data.find(function (d)
-                                  {return d.date == basedate; }).price;
+                                  {return d.date == basedate; }).close;
 
         $.compute_ratio(basevalue);
 
@@ -431,7 +431,7 @@ function stocks(div) {
 
       if ($.type == "relative") {
         $.y = d3.scale.log().range([$.height, 0]);
-        $.y.domain($.compute_domain([$.pre + "price", $.pre + "emwa12",
+        $.y.domain($.compute_domain([$.pre + "close", $.pre + "emwa12",
               $.pre + "emwa26",  $.pre + "bollinger_lower",
               $.pre + "bollinger_upper"]));
         var y_axis = d3.svg.axis()
@@ -444,7 +444,7 @@ function stocks(div) {
 
       else {
         $.y = d3.scale.linear().range([$.height, 0]);
-        $.y.domain($.compute_domain(([$.pre + "price", $.pre + "emwa12",
+        $.y.domain($.compute_domain(([$.pre + "close", $.pre + "emwa12",
               $.pre + "emwa26",  $.pre + "bollinger_lower",
               $.pre + "bollinger_upper"])));
         y_axis = d3.svg.axis().scale($.y).orient("left")
@@ -529,7 +529,7 @@ function stocks(div) {
           .attr("y", 11)
           .attr("text-anchor", "end");
 
-      write_legend("price", "", lgd_value);
+      write_legend("close", "", lgd_value);
 
       var lgd_diff = $.text.append("text")
           .attr("class", "lgd_diff")
@@ -605,12 +605,12 @@ function stocks(div) {
 
       function update_legends(d, y) {
 
-          var evol = !!y ? (d.price - y.price) / y.price * 100 : 0,
+          var evol = !!y ? (d.close - y.close) / y.close * 100 : 0,
               evolc = evol > 0 ? ' plus' : (evol < 0 ? ' minus': ''),
               evols = evol > 0 ? '▲ ' : (evol < 0 ? '▼ ': '◼ ');
 
           lgd_date.text(fr_time(d.date));
-          lgd['price'].text(fr_digit(d.price) + " €");
+          lgd['close'].text(fr_digit(d.close) + " €");
 
           lgd_diff.attr("class", "lgd_diff" + evolc);
           lgd_triangle.text(evols);
