@@ -61,7 +61,7 @@ path {
   stroke-opacity: 0.5;
 }
 
-.div_plot .bollinger {
+.div_plot .band {
   fill: black;
   fill-opacity: 0.06;
   stroke: none;
@@ -90,6 +90,15 @@ path.signal {
   fill: rgb(178, 34, 34);
   fill-opacity: 0.7;
   stroke: none;
+}
+
+
+/* Courbes du module MACD */
+
+path.rsi {
+  stroke: rgb(152, 21, 133);
+  stroke-opacity: 0.3;
+  stroke-width: 1.5px;
 }
 
 
@@ -130,15 +139,15 @@ path.signal {
   dominant-baseline: central;
 }
 
-.lgd_plot, .lgd_diff, .lgd_triangle, .lgd_ma {
+.lgd_plot, .lgd_diff, .lgd_triangle, .lgd_ma , .lgd_rs{
   font-size: 0.85em;
 }
 
-.lgd_plot, .lgd_ma {
+.lgd_plot, .lgd_ma, .lgd_rs {
   fill: #BBBBBB;
 }
 
-.lgd_bollinger {
+.lgd_band {
   fill: #CCCCCC;
 }
 
@@ -152,6 +161,10 @@ path.signal {
 
 .lgd_macd {
   fill: rgba(240, 128, 128, 0.5);
+}
+
+.lgd_rsi {
+  fill: rgba(152, 21, 133, 0.4);
 }
 
 .lgd_signal {

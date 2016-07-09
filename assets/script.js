@@ -44,6 +44,7 @@ function stocks(div) {
           $.read(err, data);
           $.draw_plot();
           $.draw_macd();
+          $.draw_rsi();
           $.draw_zoom();
           $.set_zoom("1a");
           $.show_data();
@@ -166,7 +167,8 @@ function stocks(div) {
       function draw(curve) {
           $[curve] = d3.svg.line()
             .x(function(d){ return $.x(d.date) })
-            .y(function(d){ return $.y(d[$.pre + curve]) });
+            .y(function(d){ return $.y(d[$.pre + curve]) })
+            .defined(function(d) { return d; });
 
           $.wrap.select("."+curve)
             .datum($.data)
@@ -273,6 +275,61 @@ function stocks(div) {
 
       macd.select("path.macd").attr("d", $.macd);
       macd.select("path.signal").attr("d", $.signal);
+
+  };
+
+
+
+  // Affichage du RSI
+  // -----------------
+
+  this.draw_rsi = function() {
+
+    // Définition de la zone de travail
+
+      var rsi = $.wrap.append("g")
+          .attr("class", "div_rsi")
+          .attr("transform", "translate(0," +
+              ($.svg_height - $.padding + $.top + $.bottom) + ")");
+
+      $.svg_height += $.padding + $.top;
+
+      $.svg.attr('viewBox','0 0 '+ $.svg_width +' '+ $.svg_height);
+
+
+    // Définition des courbes
+
+      rsi.append("path")
+          .attr("class", "rsi")
+          .style("clip-path", " url(#clip)");
+
+      rsi.append("path")
+          .attr("class", 'signal')
+          .style("clip-path", " url(#clip)");
+
+
+    // Définition des axes
+
+      $.y_rsi = d3.scale.linear().range([$.padding, 0]);
+      $.y_rsi.domain([0, 100]);
+      $.y_rsi_axis = d3.svg.axis()
+          .scale($.y_rsi)
+          .orient("left")
+          .tickSize(-$.width, 0).ticks(4);
+
+      rsi.append("g")
+          .attr("class", "y axis")
+          .call($.y_rsi_axis);
+
+
+    // Affichage des courbes
+
+      $.rsi = d3.svg.line()
+          .x(function(d){ return $.x(d.date) })
+          .y(function(d){ return $.y_rsi(d.rsi) });
+
+      rsi.datum($.data)
+      rsi.select("path.rsi").attr("d", $.rsi);
 
   };
 
@@ -562,6 +619,15 @@ function stocks(div) {
           write_legend("div", "Divergence : ", lgd_ma);
       }
 
+      if ($.rsi) {
+          var lgd_rsi = $.text.append("text")
+              .attr("class", "lgd_rs")
+              .style("left", $.left + "px")
+              .attr("y", $.height + $.top + $.bottom + $.padding + 5);
+
+          write_legend("rsi", "RSI : ", lgd_rsi);
+      }
+
       function write_legend(name, title, legend) {
           legend.append("tspan")
               .attr("class", "lgd_name")
@@ -628,6 +694,10 @@ function stocks(div) {
             lgd['div'].attr("class", "val " +
                 ((d.div >= 0) ? "plus" : "minus"));
           }
+
+          if ($.rsi) {
+            lgd['rsi'].text(fr_digit(d.rsi));
+          }
       }
 
   };
@@ -666,6 +736,9 @@ function stocks(div) {
 
         d3.select(".signal")
             .attr("d", $.signal);
+
+        d3.select(".rsi")
+            .attr("d", $.rsi);
 
         $.div = d3.svg.area()
             .x(function(d){ return $.x(d.date); })
