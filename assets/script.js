@@ -116,7 +116,7 @@ function stocks(div) {
           }
 
           plot.append("path")
-              .attr("class", "bollinger")
+              .attr("class", "band")
               .style("clip-path", " url(#clip)")
 
 
@@ -177,14 +177,14 @@ function stocks(div) {
         draw($.curves[c]);
       }
 
-      $.bollinger = d3.svg.area()
+      $.band = d3.svg.area()
           .x(function(d){ return $.x(d.date) })
-          .y1(function(d){ return $.y(d[$.pre + "bollinger_upper"]) })
-          .y0(function(d){ return $.y(d[$.pre + "bollinger_lower"]) });
+          .y1(function(d){ return $.y(d[$.pre + "band_upper"]) })
+          .y0(function(d){ return $.y(d[$.pre + "band_lower"]) });
 
-      $.wrap.select(".bollinger")
+      $.wrap.select(".band")
           .datum($.data)
-          .attr("d", $.bollinger);
+          .attr("d", $.band);
   };
 
 
@@ -432,8 +432,8 @@ function stocks(div) {
       if ($.type == "relative") {
         $.y = d3.scale.log().range([$.height, 0]);
         $.y.domain($.compute_domain([$.pre + "close", $.pre + "emwa12",
-              $.pre + "emwa26",  $.pre + "bollinger_lower",
-              $.pre + "bollinger_upper"]));
+              $.pre + "emwa26",  $.pre + "band_lower",
+              $.pre + "band_upper"]));
         var y_axis = d3.svg.axis()
             .scale($.y)
             .orient("left")
@@ -445,8 +445,8 @@ function stocks(div) {
       else {
         $.y = d3.scale.linear().range([$.height, 0]);
         $.y.domain($.compute_domain(([$.pre + "close", $.pre + "emwa12",
-              $.pre + "emwa26",  $.pre + "bollinger_lower",
-              $.pre + "bollinger_upper"])));
+              $.pre + "emwa26",  $.pre + "band_lower",
+              $.pre + "band_upper"])));
         y_axis = d3.svg.axis().scale($.y).orient("left")
             .tickSize(-$.width, 0);
       }
@@ -549,7 +549,7 @@ function stocks(div) {
 
       write_legend("ewma12", "EWMA12 : ", lgd_plot);
       write_legend("ewma26", "EWMA26 : ", lgd_plot);
-      write_legend("bollinger", "Bollinger : ", lgd_plot);
+      write_legend("band", "band : ", lgd_plot);
 
       if ($.macd) {
           var lgd_ma = $.text.append("text")
@@ -618,8 +618,8 @@ function stocks(div) {
 
           lgd['ewma12'].text(fr_digit(d.ewma12));
           lgd['ewma26'].text(fr_digit(d.ewma26));
-          lgd['bollinger'].text(fr_digit(d.bollinger_lower)
-              + ' – ' + fr_digit(d.bollinger_upper));
+          lgd['band'].text(fr_digit(d.band_lower)
+              + ' – ' + fr_digit(d.band_upper));
 
           if ($.macd) {
             lgd['macd'].text(fr_digit(d.macd));
@@ -648,8 +648,8 @@ function stocks(div) {
               .attr("d", $[$.curves[c]]);
       }
 
-      $.wrap.select(".bollinger")
-          .attr("d", $.bollinger);
+      $.wrap.select(".band")
+          .attr("d", $.band);
 
       if (!!$.y_macd) {
 
