@@ -167,8 +167,7 @@ function stocks(div) {
       function draw(curve) {
           $[curve] = d3.svg.line()
             .x(function(d){ return $.x(d.date) })
-            .y(function(d){ return $.y(d[$.pre + curve]) })
-            .defined(function(d) { return d; });
+            .y(function(d){ return $.y(d[$.pre + curve]) });
 
           $.wrap.select("."+curve)
             .datum($.data)
@@ -234,11 +233,13 @@ function stocks(div) {
     // Définition des axes
 
       $.y_macd = d3.scale.linear().range([$.padding, 0]);
-      $.y_macd.domain($.compute_domain(["macd", "signal", "div"]));
+      $.y_div = d3.scale.linear().range([$.padding, 0]);
+      $.y_macd.domain($.compute_domain(["macd", "signal"], 'sym'));
+      $.y_div.domain($.compute_domain(["div"], 'sym'));
       $.y_macd_axis = d3.svg.axis()
           .scale($.y_macd)
           .orient("left")
-          .tickSize(-$.width, 0).ticks(4);
+          .tickSize(-$.width, 0).ticks(5);
 
       macd.append("g")
           .attr("class", "y axis")
@@ -257,21 +258,21 @@ function stocks(div) {
 
       $.div = d3.svg.area()
           .x(function(d){ return $.x(d.date) })
-          .y0($.y_macd(0));
+          .y0($.y_div(0));
 
       macd.datum($.data)
           .append("clipPath")
           .attr("id", "positif")
           .append("path")
           .attr("d", $.div.y1(function(d){
-            return Math.min($.y_macd(0), $.y_macd(d.div)) }));
+            return Math.min($.y_div(0), $.y_div(d.div)) }));
 
       macd.datum($.data)
           .append("clipPath")
           .attr("id", "negatif")
           .append("path")
           .attr("d", $.div.y1(function(d){
-            return Math.max($.y_macd(0), $.y_macd(d.div)) }));
+            return Math.max($.y_div(0), $.y_div(d.div)) }));
 
       macd.select("path.macd").attr("d", $.macd);
       macd.select("path.signal").attr("d", $.signal);
@@ -519,7 +520,7 @@ function stocks(div) {
   // Calcul des domaines
   // -------------------
 
-  this.compute_domain = function(keys) {
+  this.compute_domain = function(keys, type) {
 
       var ext = [],
           Δ = 0.1;
@@ -545,7 +546,13 @@ function stocks(div) {
         ext[1] = !!ext[1] ? Math.max(ext[1], ens[1] * (1+Δ)) : ens[1] * (1+Δ);
       }
 
-      return ext;
+      if(type == "sym") {
+        var sym = Math.max(-ext[0], ext[1]);
+        return [-sym, sym];
+      }
+      else {
+        return ext;
+      }
   };
 
 
@@ -606,7 +613,7 @@ function stocks(div) {
 
       write_legend("ewma12", "EWMA12 : ", lgd_plot);
       write_legend("ewma26", "EWMA26 : ", lgd_plot);
-      write_legend("band", "band : ", lgd_plot);
+      write_legend("band", "Bollinger : ", lgd_plot);
 
       if ($.macd) {
           var lgd_ma = $.text.append("text")
@@ -725,11 +732,11 @@ function stocks(div) {
 
         d3.select("#positif path")
             .attr("d", $.div.y1(function(d){
-              return Math.min($.y_macd(0), $.y_macd(d.div)); }));
+              return Math.min($.y_div(0), $.y_div(d.div)); }));
 
         d3.select("#negatif path")
             .attr("d", $.div.y1(function(d){
-              return Math.max($.y_macd(0), $.y_macd(d.div)); }));
+              return Math.max($.y_div(0), $.y_div(d.div)); }));
 
         d3.select(".macd")
             .attr("d", $.macd);
@@ -742,7 +749,7 @@ function stocks(div) {
 
         $.div = d3.svg.area()
             .x(function(d){ return $.x(d.date); })
-            .y0($.y_macd(0));
+            .y0($.y_div(0));
       }
 
       if (!$.brush || $.brush.empty()) {
