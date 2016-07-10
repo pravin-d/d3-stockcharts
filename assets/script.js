@@ -785,9 +785,9 @@ function stocks(div) {
           }
 
           if ($.rsi) {
-            lgd['dip'].text(fr_digit(d.dip));
-            lgd['dim'].text(fr_digit(d.dim));
-            lgd['adx'].text(fr_digit(d.adx));
+            lgd['dip'].text(fr_digit(d.dip)+" %");
+            lgd['dim'].text(fr_digit(d.dim)+" %");
+            lgd['adx'].text(fr_digit(d.adx)+" %");
           }
       }
 
