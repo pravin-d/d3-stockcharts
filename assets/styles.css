@@ -93,7 +93,7 @@ path.signal {
 }
 
 
-/* Courbes du module MACD */
+/* Courbes du module RSI */
 
 path.rsi {
   stroke: rgb(152, 21, 133);
@@ -101,6 +101,24 @@ path.rsi {
   stroke-width: 1.5px;
 }
 
+
+/* Courbes du module ADX */
+
+path.adx {
+  stroke: #333;
+  stroke-opacity: 0.5;
+  stroke-width: 1.7px;
+}
+
+path.dim {
+  stroke: rgb(240, 128, 128);
+  stroke-opacity: 0.7;
+}
+
+path.dip {
+  stroke: rgb(70, 130, 180);
+  stroke-opacity: 0.5;
+}
 
 /* Sélecteur */
 
@@ -168,6 +186,18 @@ path.rsi {
 }
 
 .lgd_signal {
+  fill: rgba(70, 130, 180, 0.5);
+}
+
+.lgd_adx {
+  fill: #AAA;
+}
+
+.lgd_dip {
+  fill: rgba(240, 128, 128, 0.7);
+}
+
+.lgd_dim {
   fill: rgba(70, 130, 180, 0.5);
 }
 

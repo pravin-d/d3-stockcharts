@@ -45,6 +45,7 @@ function stocks(div) {
           $.draw_plot();
           $.draw_macd();
           $.draw_rsi();
+          $.draw_adx();
           $.draw_zoom();
           $.set_zoom("1a");
           $.show_data();
@@ -304,10 +305,6 @@ function stocks(div) {
           .attr("class", "rsi")
           .style("clip-path", " url(#clip)");
 
-      rsi.append("path")
-          .attr("class", 'signal')
-          .style("clip-path", " url(#clip)");
-
 
     // Définition des axes
 
@@ -331,6 +328,76 @@ function stocks(div) {
 
       rsi.datum($.data)
       rsi.select("path.rsi").attr("d", $.rsi);
+
+  };
+
+
+
+
+  // Affichage de l'ADX
+  // -----------------
+
+  this.draw_adx = function() {
+
+    // Définition de la zone de travail
+
+      var adx = $.wrap.append("g")
+          .attr("class", "div_adx")
+          .attr("transform", "translate(0," +
+              ($.svg_height - $.padding + $.top + $.bottom) + ")");
+
+      $.svg_height += $.padding + $.top;
+
+      $.svg.attr('viewBox','0 0 '+ $.svg_width +' '+ $.svg_height);
+
+
+    // Définition des courbes
+
+      adx.append("path")
+          .attr("class", "adx")
+          .style("clip-path", " url(#clip)");
+
+      adx.append("path")
+          .attr("class", 'dim')
+          .style("clip-path", " url(#clip)");
+
+      adx.append("path")
+          .attr("class", 'dip')
+          .style("clip-path", " url(#clip)");
+
+
+    // Définition des axes
+
+      $.y_adx = d3.scale.linear().range([$.padding, 0]);
+      $.y_adx.domain($.compute_domain(["adx", "dim", "dip"]));
+      $.y_adx_axis = d3.svg.axis()
+          .scale($.y_adx)
+          .orient("left")
+          .tickSize(-$.width, 0).ticks(4);
+
+      adx.append("g")
+          .attr("class", "y axis")
+          .call($.y_adx_axis);
+
+
+    // Affichage des courbes
+
+      $.adx = d3.svg.line()
+          .x(function(d){ return $.x(d.date) })
+          .y(function(d){ return $.y_adx(d.adx) });
+
+      $.dim = d3.svg.line()
+          .x(function(d){ return $.x(d.date) })
+          .y(function(d){ return $.y_adx(d.dim) });
+
+      $.dip = d3.svg.line()
+          .x(function(d){ return $.x(d.date) })
+          .y(function(d){ return $.y_adx(d.dip) });
+
+      adx.datum($.data)
+      adx.select("path.adx").attr("d", $.adx);
+      adx.select("path.dim").attr("d", $.dim);
+      adx.select("path.dip").attr("d", $.dip);
 
   };
 
@@ -635,6 +702,17 @@ function stocks(div) {
           write_legend("rsi", "RSI : ", lgd_rsi);
       }
 
+      if ($.adx) {
+          var lgd_adx = $.text.append("text")
+              .attr("class", "lgd_rs")
+              .style("left", $.left + "px")
+              .attr("y", $.height + 2 * $.top + $.bottom + 2 * $.padding + 5);
+
+          write_legend("dip", "DI+ : ", lgd_adx);
+          write_legend("dim", "DI- : ", lgd_adx);
+          write_legend("adx", "ADX : ", lgd_adx);
+      }
+
       function write_legend(name, title, legend) {
           legend.append("tspan")
               .attr("class", "lgd_name")
@@ -703,7 +781,13 @@ function stocks(div) {
           }
 
           if ($.rsi) {
-            lgd['rsi'].text(fr_digit(d.rsi));
+            lgd['rsi'].text(fr_digit(d.rsi)+" %");
+          }
+
+          if ($.rsi) {
+            lgd['dip'].text(fr_digit(d.dip));
+            lgd['dim'].text(fr_digit(d.dim));
+            lgd['adx'].text(fr_digit(d.adx));
           }
       }
 
@@ -746,6 +830,15 @@ function stocks(div) {
 
         d3.select(".rsi")
             .attr("d", $.rsi);
+
+        d3.select(".adx")
+            .attr("d", $.adx);
+
+        d3.select(".dim")
+            .attr("d", $.dim);
+
+        d3.select(".dip")
+            .attr("d", $.dip);
 
         $.div = d3.svg.area()
             .x(function(d){ return $.x(d.date); })
