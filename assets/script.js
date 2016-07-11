@@ -40,7 +40,7 @@ function stocks(div) {
         isin = window.location.search.replace("?", "");
       }
 
-      d3.csv('data/isin/' + isin + '.csv', function(err, data) {
+      d3.csv('data/' + isin + '.csv', function(err, data) {
           $.read(err, data);
           $.draw_plot();
           $.draw_macd();
