@@ -12,7 +12,6 @@ body {
   cursor: default;
   margin: 0 auto;
 
-  user-select: none;
   -moz-user-select: none;
   -webkit-user-select: none;
   -ms-user-select: none;
@@ -232,12 +231,9 @@ path.dip {
 }
 
 .axis.y .tick line {
-  stroke-opacity: .4;
+  stroke-opacity: .3;
 }
 
-.axis.y .tick:not(.tick-one) line {
-  stroke-opacity: .05;
-}
 
 .overlay {
   fill: none;

@@ -1,25 +1,20 @@
 <!doctype html>
-<html lang="fr">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <title>Stocks</title>
-  <link href="assets/styles.css" rel="stylesheet" />
-  <script src="assets/d3.js"></script>
-  <script src="assets/d3.fr.js"></script>
+  <link href="styles.css" rel="stylesheet" />
+  <script src="https://d3js.org/d3.v4.min.js"></script>
+  <script src="script.js"></script>
 </head>
 
 <body>
 
   <div id="stocks"></div>
 
-  <script src="assets/script.js"></script>
-
   <script>
-
     var graph = new stocks('#stocks');
-
     graph.load('FR0000045072');
-
   </script>
 
 </body>
