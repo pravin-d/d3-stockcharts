@@ -14,7 +14,17 @@
 
   <script>
     var graph = new stocks('#stocks');
-    graph.load('FR0000045072');
+
+    d3.csv('data/FR0000045072.csv', graph.read, function(e, data) {
+      graph.data = data;
+      graph.draw_plot();
+      graph.draw_macd();
+      graph.draw_rsi();
+      graph.draw_adx();
+      graph.set_zoom("1a");
+      graph.show_data();
+    });
+
   </script>
 
 </body>

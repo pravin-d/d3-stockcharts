@@ -16,36 +16,67 @@ function stocks(div) {
 
     $.curves = ["ewma12", "ewma26", "close"];
 
+    // Box sizing
+
     $.width   = 600;
-    $.height  = 300;
-    $.top     =  30;
-    $.bottom  =  40;
+    $.height  = 100;
+    $.margin  =  30;
+    $.padding =  20;
     $.left    =  40;
     $.right   =  20;
-    $.padding = 100;
-   }
 
+    // Plot initialization
 
-// Loading data and default functions
-// ----------------------------------
+    $.x  = d3.scaleTime().range([0, $.width]);
 
-  this.load = function(isin) {
+    $.svg_width = $.width + $.left + $.right,
+    $.svg_height = 3*$.height + 2*$.margin + 50 - $.padding;
 
-    if (isin === undefined) {
-      isin = window.location.search.replace("?", "");
+    $.svg = d3.select(div)
+        .append("svg")
+        .attr("width", "100%")
+        .attr("height", "100%")
+        .attr('viewBox','0 0 '+ $.svg_width +' '+ $.svg_height);
+
+    $.svg.append("defs").append("clipPath")
+        .attr("id", "clip")
+        .append("rect")
+        .attr("width", $.width)
+        .attr("height", 2*$.margin + 3*$.height);
+
+    $.wrap = $.svg.append("g")
+        .attr("class", "wrap")
+        .attr("transform", "translate("+$.left+","+$.margin+")");
+
+    var plot = $.wrap.append("g")
+        .attr("class", "div_plot");
+
+    for (var c in $.curves) {
+      plot.append("path")
+          .attr("class", $.curves[c])
+          .style("clip-path", " url(#clip)");
     }
 
-    d3.csv('data/' + isin + '.csv', $.read, function(e, data) {
-      $.data = data;
-      $.draw_plot();
-      $.draw_macd();
-      $.draw_rsi();
-      $.draw_adx();
-      $.set_zoom("1a");
-      $.show_data();
-    });
-  };
+    plot.append("path")
+        .attr("class", "band")
+        .style("clip-path", " url(#clip)")
 
+    var selecteur = plot.append("text")
+        .attr("class", "selecteur absolute")
+        .attr("x", -$.left + 13)
+        .attr("y", -10)
+        .on("click", function() {
+            var type = ($.type == "relative")?"absolute":"relative";
+            $.type = type;
+            $.draw_plot();
+            selecteur.attr("class", "selecteur " + type);
+        });
+
+    selecteur.append("tspan").attr("class", "absolute").text("€");
+    selecteur.append("tspan").text(" / ");
+    selecteur.append("tspan").attr("class", "relative").text("%");
+
+   }
 
 
 // Reading data
@@ -68,60 +99,7 @@ function stocks(div) {
 // Showing price plot
 // ------------------
 
-  this.draw_plot = function(update) {
-
-    if (update === undefined) {
-
-      $.x  = d3.scaleTime().range([0, $.width]);
-
-      $.svg_width = $.width + $.left + $.right,
-      $.svg_height = $.height + $.top + $.bottom;
-
-      $.svg = d3.select(div)
-          .append("svg")
-          .attr("width", "100%")
-          .attr("height", "100%")
-          .attr('viewBox','0 0 '+ $.svg_width +' '+ $.svg_height);
-
-      $.svg.append("defs").append("clipPath")
-          .attr("id", "clip")
-          .append("rect")
-          .attr("width", $.width)
-          .attr("height", $.top + $.height + $.bottom);
-
-      $.wrap = $.svg.append("g")
-          .attr("class", "wrap")
-          .attr("transform", "translate(" + $.left + "," + $.top + ")");
-
-      var plot = $.wrap.append("g")
-          .attr("class", "div_plot");
-
-      for (var c in $.curves) {
-        plot.append("path")
-            .attr("class", $.curves[c])
-            .style("clip-path", " url(#clip)");
-      }
-
-      plot.append("path")
-          .attr("class", "band")
-          .style("clip-path", " url(#clip)")
-
-      var selecteur = plot.append("text")
-          .attr("class", "selecteur absolute")
-          .attr("x", -$.left + 13)
-          .attr("y", -10)
-          .on("click", function() {
-              var type = ($.type == "relative") ? "absolute" : "relative";
-              $.type = type;
-              $.draw_plot("update");
-              selecteur.attr("class", "selecteur " + type);
-          });
-
-      selecteur.append("tspan").attr("class", "absolute").text("€");
-      selecteur.append("tspan").text(" / ");
-      selecteur.append("tspan").attr("class", "relative").text("%");
-
-    }
+  this.draw_plot = function() {
 
     if ($.type == "relative") {
       $.compute_ratio($.data[0].close);
@@ -136,14 +114,14 @@ function stocks(div) {
 
     plot.append("g")
         .attr("class", "x axis")
-        .attr("transform", "translate(0," + $.height + ")");
+        .attr("transform", "translate(0," + 3*$.height + ")");
 
     $.update_axis();
 
     var options = ["max", "10a", "5a", "2a", "1a", "6m"],
         range = plot.append("text")
             .attr("x", $.width)
-            .attr("y", - $.top / 2)
+            .attr("y", - $.margin / 2)
             .attr("text-anchor", "end")
             .attr("class", "range");
 
@@ -152,7 +130,7 @@ function stocks(div) {
       range.append("tspan")
           .attr("class", "range_" + options[i])
           .text(options[i])
-          .on("click", function(){$.set_zoom(d3.select(this).text())});
+          .on("click",function(){$.set_zoom(d3.select(this).text())});
       range.append("tspan").text("  ");
     }
 
@@ -190,22 +168,22 @@ function stocks(div) {
     var macd = $.wrap.append("g")
         .attr("class", "div_macd")
         .attr("transform", "translate(0," +
-            ($.svg_height - $.padding + $.top + $.bottom) + ")");
+            ($.svg_height - $.height + 2*$.padding) + ")");
 
-    $.svg_height += $.padding + $.top;
+    $.svg_height += $.height + $.padding;
 
     $.svg.attr('viewBox','0 0 '+ $.svg_width +' '+ $.svg_height);
 
     macd.append("rect")
         .attr("class", "positif")
         .attr("width", $.width)
-        .attr("height", $.padding)
+        .attr("height", $.height)
         .attr("clip-path", "url(#positif)");
 
     macd.append("rect")
         .attr("class", "negatif")
         .attr("width", $.width)
-        .attr("height", $.padding)
+        .attr("height", $.height)
         .attr("clip-path", "url(#negatif)");
 
     macd.append("path")
@@ -216,8 +194,8 @@ function stocks(div) {
         .attr("class", 'signal')
         .style("clip-path", " url(#clip)");
 
-    $.y_macd = d3.scaleLinear().range([$.padding, 0]);
-    $.y_div = d3.scaleLinear().range([$.padding, 0]);
+    $.y_macd = d3.scaleLinear().range([$.height, 0]);
+    $.y_div = d3.scaleLinear().range([$.height, 0]);
     $.y_macd.domain($.compute_domain(["macd", "signal"], 'sym'));
     $.y_div.domain($.compute_domain(["div"], 'sym'));
     $.y_macd_axis = d3.axisLeft().scale($.y_macd).ticks(5);
@@ -267,9 +245,9 @@ function stocks(div) {
     var rsi = $.wrap.append("g")
         .attr("class", "div_rsi")
         .attr("transform", "translate(0," +
-            ($.svg_height - $.padding + $.top + $.bottom) + ")");
+            ($.svg_height - $.height + 2*$.padding) + ")");
 
-    $.svg_height += $.padding + $.top;
+    $.svg_height += $.height + $.padding;
 
     $.svg.attr('viewBox','0 0 '+ $.svg_width +' '+ $.svg_height);
 
@@ -277,7 +255,7 @@ function stocks(div) {
         .attr("class", "rsi")
         .style("clip-path", " url(#clip)");
 
-    $.y_rsi = d3.scaleLinear().range([$.padding, 0]);
+    $.y_rsi = d3.scaleLinear().range([$.height, 0]);
     $.y_rsi.domain([0, 100]);
     $.y_rsi_axis = d3.axisLeft()
         .scale($.y_rsi).ticks(4);
@@ -305,9 +283,9 @@ function stocks(div) {
     var adx = $.wrap.append("g")
         .attr("class", "div_adx")
         .attr("transform", "translate(0," +
-            ($.svg_height - $.padding + $.top + $.bottom) + ")");
+            ($.svg_height - $.height + 2*$.padding) + ")");
 
-    $.svg_height += $.padding + $.top;
+    $.svg_height += $.height + $.padding;
 
     $.svg.attr('viewBox','0 0 '+ $.svg_width +' '+ $.svg_height);
 
@@ -323,7 +301,7 @@ function stocks(div) {
         .attr("class", 'dip')
         .style("clip-path", " url(#clip)");
 
-    $.y_adx = d3.scaleLinear().range([$.padding, 0]);
+    $.y_adx = d3.scaleLinear().range([$.height, 0]);
     $.y_adx.domain($.compute_domain(["adx", "dim", "dip"]));
     $.y_adx_axis = d3.axisLeft().scale($.y_adx).ticks(4);
 
@@ -381,9 +359,9 @@ function stocks(div) {
 
     if ($.type == "relative") {
       var basedate = d3.min($.data.map(function(d)
-                              {if (d.date >= $.ext[0]) return d.date})),
+                          {if (d.date >= $.ext[0]) return d.date})),
           basevalue = $.data.find(function (d)
-                                {return d.date == basedate; }).close;
+                          {return d.date == basedate; }).close;
 
       $.compute_ratio(basevalue);
     }
@@ -392,18 +370,18 @@ function stocks(div) {
     $.svg.select(".div_plot .x.axis").call(x_axis);
 
     if ($.type == "relative") {
-      $.y = d3.scaleLog().range([$.height, 0]);
+      $.y = d3.scaleLog().range([3*$.height, 0]);
       $.y.domain($.compute_domain([$.pre + "close", $.pre + "emwa12",
             $.pre + "emwa26",  $.pre + "band_lower",
             $.pre + "band_upper"]));
       var y_axis = d3.axisLeft()
           .scale($.y)
-          .tickFormat(function(x) { return d3.format("+.0%")(x - 1); })
+          .tickFormat(function(x) { return d3.format("+.0%")(x - 1);})
           .tickValues(d3.scaleLinear().domain($.y.domain()).ticks(7));
     }
 
     else {
-      $.y = d3.scaleLinear().range([$.height, 0]);
+      $.y = d3.scaleLinear().range([3*$.height, 0]);
       $.y.domain($.compute_domain(([$.pre + "close", $.pre + "emwa12",
             $.pre + "emwa26",  $.pre + "band_lower",
             $.pre + "band_upper"])));
@@ -430,7 +408,7 @@ function stocks(div) {
     }
 
     for (var k in keys) {
-      var dom = d3.extent($.data.map(function(d){ return d[keys[k]] })),
+      var dom = d3.extent($.data.map(function(d){return d[keys[k]]})),
           ens = dom;
 
       if (keys[0] != "macd") {
@@ -441,8 +419,8 @@ function stocks(div) {
         }
       }
 
-      ext[0] = !!ext[0] ? Math.min(ext[0], ens[0] * (1-Δ)) : ens[0] * (1-Δ);
-      ext[1] = !!ext[1] ? Math.max(ext[1], ens[1] * (1+Δ)) : ens[1] * (1+Δ);
+      ext[0] = !!ext[0]?Math.min(ext[0], ens[0]*(1-Δ)) : ens[0]*(1-Δ);
+      ext[1] = !!ext[1]?Math.max(ext[1], ens[1]*(1+Δ)) : ens[1]*(1+Δ);
     }
 
     if(type == "sym") {
@@ -467,7 +445,7 @@ function stocks(div) {
 
     $.focus.append("line")
         .attr("y1", 0)
-        .attr("y2", $.svg_height - $.padding + $.bottom);
+        .attr("y2", $.svg_height - $.height + $.margin);
 
     var lgd = {}
 
@@ -510,10 +488,11 @@ function stocks(div) {
     write_legend("band", "Bollinger : ", lgd_plot);
 
     if ($.macd) {
-      var lgd_ma = $.text.append("text")
+      var lgd_ma = d3.select(".div_macd")
+          .append("text")
           .attr("class", "lgd_ma")
           .style("left", $.left + "px")
-          .attr("y", $.height + $.bottom + 5);
+          .attr("y", 10);
 
       write_legend("macd", "MACD : ", lgd_ma);
       write_legend("signal", "Signal : ", lgd_ma);
@@ -521,19 +500,21 @@ function stocks(div) {
     }
 
     if ($.rsi) {
-      var lgd_rsi = $.text.append("text")
+      var lgd_rsi = d3.select(".div_rsi")
+          .append("text")
           .attr("class", "lgd_rs")
           .style("left", $.left + "px")
-          .attr("y", $.height + $.top + $.bottom + $.padding + 5);
+          .attr("y", 10);
 
       write_legend("rsi", "RSI : ", lgd_rsi);
     }
 
     if ($.adx) {
-      var lgd_adx = $.text.append("text")
+      var lgd_adx = d3.select(".div_adx")
+          .append("text")
           .attr("class", "lgd_rs")
           .style("left", $.left + "px")
-          .attr("y", $.height + 2 * $.top + $.bottom + 2 * $.padding + 5);
+          .attr("y", 10);
 
       write_legend("dip", "DI+ : ", lgd_adx);
       write_legend("dim", "DI- : ", lgd_adx);
@@ -552,7 +533,7 @@ function stocks(div) {
     $.wrap.append("rect")
         .attr("class", "overlay")
         .attr("width", $.width)
-        .attr("height", $.svg_height - $.padding + $.bottom);
+        .attr("height", $.svg_height - $.height + $.margin);
 
     default_legends();
 
