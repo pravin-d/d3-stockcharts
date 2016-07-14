@@ -22,6 +22,8 @@ body {
 
 #stocks svg {
   display: block;
+  position: absolute;
+  top: 0;
 }
 
 .area {
@@ -43,81 +45,6 @@ path {
   stroke: #777;
 }
 
-
-/* Courbes du graphique principal */
-
-.div_plot path.close {
-  stroke-width: 1.5px;
-}
-
-.div_plot path.ewma12 {
-  stroke: rgb(240, 128, 128);
-  stroke-opacity: 0.7;
-}
-
-.div_plot path.ewma26 {
-  stroke: rgb(70, 130, 180);
-  stroke-opacity: 0.5;
-}
-
-.div_plot .band {
-  fill: black;
-  fill-opacity: 0.06;
-  stroke: none;
-}
-
-
-/* Courbes du module MACD */
-
-path.macd {
-  stroke: rgb(240, 128, 128);
-  stroke-opacity: 0.3;
-}
-
-path.signal {
-  stroke: rgb(70, 130, 180);
-  stroke-opacity: 0.3;
-}
-
-.positif {
-  fill: rgb(0, 128, 0) ;
-  fill-opacity: 0.7;
-  stroke: none;
-}
-
-.negatif {
-  fill: rgb(178, 34, 34);
-  fill-opacity: 0.7;
-  stroke: none;
-}
-
-
-/* Courbes du module RSI */
-
-path.rsi {
-  stroke: rgb(152, 21, 133);
-  stroke-opacity: 0.3;
-  stroke-width: 1.5px;
-}
-
-
-/* Courbes du module ADX */
-
-path.adx {
-  stroke: #333;
-  stroke-opacity: 0.5;
-  stroke-width: 1.7px;
-}
-
-path.dim {
-  stroke: rgb(240, 128, 128);
-  stroke-opacity: 0.7;
-}
-
-path.dip {
-  stroke: rgb(70, 130, 180);
-  stroke-opacity: 0.5;
-}
 
 /* Sélecteur */
 
@@ -156,48 +83,12 @@ path.dip {
   dominant-baseline: central;
 }
 
-.lgd_plot, .lgd_diff, .lgd_triangle, .lgd_ma , .lgd_rs{
+.legend, .lgd_diff, .lgd_triangle, .lgd_ma , .lgd_rs{
   font-size: 0.85em;
 }
 
-.lgd_plot, .lgd_ma, .lgd_rs {
+.legend {
   fill: #BBBBBB;
-}
-
-.lgd_band {
-  fill: #CCCCCC;
-}
-
-.lgd_ewma12 {
-  fill: rgba(240, 128, 128, 0.7);
-}
-
-.lgd_ewma26 {
-  fill: rgba(70, 130, 180, 0.5);
-}
-
-.lgd_macd {
-  fill: rgba(240, 128, 128, 0.5);
-}
-
-.lgd_rsi {
-  fill: rgba(152, 21, 133, 0.4);
-}
-
-.lgd_signal {
-  fill: rgba(70, 130, 180, 0.5);
-}
-
-.lgd_adx {
-  fill: #AAA;
-}
-
-.lgd_dip {
-  fill: rgba(240, 128, 128, 0.7);
-}
-
-.lgd_dim {
-  fill: rgba(70, 130, 180, 0.5);
 }
 
 .plus {
@@ -214,6 +105,9 @@ path.dip {
 .range {
   font-size: 1.1em;
   fill: #888888;
+}
+
+.range tspan[class] {
   cursor: pointer;
 }
 
@@ -225,13 +119,8 @@ path.dip {
 
 /* Divers */
 
-.brush .extent {
-  stroke: #bbb;
-  fill-opacity: .125;
-}
-
-.axis.y .tick line {
-  stroke-opacity: .3;
+.axis .tick line {
+  stroke-opacity: .5;
 }
 
 
