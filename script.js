@@ -116,7 +116,7 @@ function stocks(div, curves) {
 
       $.legends[i] = $.svg.append("text")
         .attr("class", "legend")
-        .attr("transform", "translate(0, " + (y + 11) + ")");
+        .attr("transform", "translate(0, " + (y + 7) + ")");
 
       for (var j in box.curves) {
         var curve = box.curves[j];
@@ -427,24 +427,25 @@ function stocks(div, curves) {
       }
     }
 
+    function detect_pointer() {
+      !!(d3.event.type=="mouseover") && $.focus.style("display", null);
+      var x0 = $.x.invert(d3.mouse(this)[0]),
+          i = d3.bisector( function(d){ return d.date})
+              .left($.data, x0, 1),
+          d0 = $.data[i - 1],
+          d1 = (!$.data[i] ? $.data[i- 1] : $.data[i]),
+          test = (x0 - d0.date > d1.date - x0),
+          d = test ? d1 : d0;
+      $.focus.attr("transform", "translate("+$.x(d.date)+",0)");
+      update_legends(d, test ? d0 : $.data[i-2]);
+    }
+
     default_legends();
 
     d3.selectAll(".overlay")
       .on("mouseout", default_legends)
-      .on("mousemove", function () {
-          var x0 = $.x.invert(d3.mouse(this)[0]),
-              i = d3.bisector( function(d){ return d.date})
-                  .left($.data, x0, 1),
-              d0 = $.data[i - 1],
-              d1 = (!$.data[i] ? $.data[i- 1] : $.data[i]),
-              test = (x0 - d0.date > d1.date - x0),
-              d = test ? d1 : d0;
-          $.focus.attr("transform", "translate("+$.x(d.date)+",0)");
-          update_legends(d, test ? d0 : $.data[i-2]);
-        })
-      .on("mouseover", function() {
-          $.focus.style("display", null)
-        });
+      .on("mousemove", detect_pointer)
+      .on("mouseover", detect_pointer);
 
   };
 
