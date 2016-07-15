@@ -99,9 +99,10 @@ function stocks(div, curves) {
               .text(curve.name + " : ");
 
           $.format[curve.id] = curve.format || ".1f";
-          $.legend[curve.id] = $.legends[i].append("tspan")
-            .attr("class", "lgd_val")
-            .style("fill", curve.color);
+          $.legend[curve.id] = $.legend[curve.id] || [];
+          $.legend[curve.id].push($.legends[i].append("tspan")
+            .attr("class", "lgd_val lgd_" + curve.id)
+            .style("fill", curve.color));
         }
       }
       y += (box.height||1)*$.height + $.padding + (!!box.axis&&17);
@@ -356,7 +357,9 @@ function stocks(div, curves) {
     function update_legends(d, y) {
       $.date.text(d3.timeFormat('%A %e %B %Y')(d.date));
       for (var i in $.legend) {
-        $.legend[i].text(d3.format($.format[i])(d[i]));
+        for (var j in $.legend[i]) {
+          $.legend[i][j].text(d3.format($.format[i])(d[i]));
+        }
       }
     }
 
@@ -373,7 +376,7 @@ function stocks(div, curves) {
               test = (x0 - d0.date > d1.date - x0),
               d = test ? d1 : d0;
           $.focus.attr("transform", "translate("+$.x(d.date)+",0)");
-          update_legends(d, test ? d0 : $.data[i - 2]);
+          update_legends(d, test ? d0 : $.data[i-2]);
         })
       .on("mouseover", function() {
           $.focus.style("display", null)
