@@ -20,19 +20,22 @@ function stocks(div, curves) {
     $.width   = 600;
     $.height  =  75;
     $.margin  =  30;
-    $.padding =   5;
-    $.left    =  40;
+    $.padding =   8;
+    $.left    =  50;
     $.right   =  20;
+    $.text    =  20;
 
 
     // SVG initialization
 
 
     $.svg_width = $.width + $.left + $.right;
-    $.svg_height = 2*$.margin;
+    $.svg_height = 1.5*$.margin;
 
-    for (var i in curves) {
-      $.svg_height += (curves[i].height||1) * $.height + $.padding;
+    for (var i = 0; i < curves.length; i++) {
+      $.svg_height += (curves[i].height||1) * $.height + $.padding +
+                      $.text * (!!curves[i].axis ||
+                      (!!curves[i+1] &&! !curves[i+1].ratio));
     }
 
     $.svg = d3.select(div)
@@ -68,6 +71,7 @@ function stocks(div, curves) {
     // Create axis and legends
 
     var y = 0;
+    $.type = [];
     $.axis = [];
     $.format = [];
     $.legend = [];
@@ -76,25 +80,48 @@ function stocks(div, curves) {
     for (var i in curves) {
       var box = curves[i];
 
+      // Horizontal axis
+
       if ( box.axis ) {
         $.svg.append("g")
             .attr("class", "x axis")
-            .attr("transform", "translate(0,"+(y+(box.height||1)*$.height)+")");
+            .attr("transform","translate(0,"+(y+(box.height||1)*$.height)+")");
       }
-      
+
       $.axis[i] = $.svg.append("g")
           .attr("class", "axis")
           .attr("transform", "translate(0, " + y + ")");
 
+      // Ratio selector
+
+      if ( box.ratio ) {
+        var select = $.svg.append("text")
+            .attr("id", "select" + i)
+            .attr("class", "select absolute")
+            .attr("transform", "translate(0, " + (y-4) + ")")
+            .attr("text-anchor", "end")
+            .on("click", function() {
+              var k = d3.select(this).attr("id").slice(6);
+              $.type[k] = ($.type[k] == "relative") ? "absolute" : "relative";
+              $.draw();
+              d3.select(this).attr("class", "select " + $.type[k]);
+            });
+
+        select.append("tspan").attr("class", "absolute").text('$');
+        select.append("tspan").text(" / ");
+        select.append("tspan").attr("class", "relative").text("%");
+      }
+
+      // Legends
+
       $.legends[i] = $.svg.append("text")
         .attr("class", "legend")
-        .attr("transform", "translate(0, " + (y + 12) + ")");
+        .attr("transform", "translate(0, " + (y + 11) + ")");
 
       for (var j in box.curves) {
         var curve = box.curves[j];
         if (!!curve.name) {
           $.legends[i].append("tspan")
-              .attr("class", "lgd_name")
               .attr("dx", 8)
               .text(curve.name + " : ");
 
@@ -105,13 +132,19 @@ function stocks(div, curves) {
             .style("fill", curve.color));
         }
       }
-      y += (box.height||1)*$.height + $.padding + (!!box.axis&&17);
+
+      // Translation to the next box
+
+      y += (box.height||1)*$.height + $.padding
+        + ((!!box.axis || (!!curves[(parseInt(i)+1)+""]
+          && !!curves[(parseInt(i)+1)+""].ratio)) && $.text);
+
     }
 
     $.date = $.svg.append("g")
         .attr("transform", "translate(0, 5)")
         .append("text")
-        .attr("class", "lgd_date")
+        .attr("class", "legend date")
         .attr("x", $.width)
         .attr("y",10)
         .attr("text-anchor", "end");
@@ -145,7 +178,7 @@ function stocks(div, curves) {
       range.append("tspan").text("  ");
       range.append("tspan").text(options[i])
           .attr("class", "range_" + options[i])
-          .on("click",function(){$.set_zoom(d3.select(this).text())});
+          .on("click",function(){$.set_zoom(d3.select(this).text()); });
     }
   }
 
@@ -167,7 +200,6 @@ function stocks(div, curves) {
     return d;
 
   };
-
 
 
 
@@ -243,29 +275,59 @@ function stocks(div, curves) {
       // Compute and show vertical axis
 
       var box = curves[i],
-          y = d3.scaleLinear().range([(box.height||1)* $.height, 0]),
+          y = d3["scale" + (($.type[i]=="relative") ? "Log" : "Linear")]()
+                .range([(box.height||1)* $.height, 0]),
           axis = d3.axisLeft().ticks(3.5 * (box.height||1)),
           list = [];
 
       for (var j in box.curves) {
-        list.push(box.curves[j].id);
+
+        // Compute ratio if necessary
+
+        var pre = "";
+
+        if ($.type[i] == "relative") {
+          pre = "ratio_";
+
+          var id = box.curves[j].id,
+              name = (typeof(id) == "string")? [id] : id,
+              start = d3.min($.data.map(function(d)
+                              {if (d.date >= $.ext[0]) return d.date})),
+              base = $.data.find(function (d)
+                              {return d.date == start; })[box.ratio];
+
+          for (var id in name) {
+            $.data.forEach(function(d){d[pre+name[id]] = d[name[id]]/base});
+          }
+        }
+        list.push(pre + box.curves[j].id);
       }
+
       y.domain($.compute_domain(list, (box.type == "sym")));
+
+      if ($.type[i] == "relative") {
+          axis = d3.axisLeft()
+                  .tickFormat(function(x) { return d3.format("+.0%")(x - 1);})
+                  .tickValues(d3.scaleLinear().domain(y.domain())
+                      .ticks(3.5 * (box.height||1)));
+      }
+
       $.axis[i].call(axis.scale(y));
 
       // Loop over each curve
 
       for (var j in box.curves) {
-        var curve = box.curves[j];
+        var curve = box.curves[j],
+            id = pre + curve.id;
 
         // Draw area between two variables
 
-        if (typeof(curve.id) != "string") {
+        if (typeof(id) != "string") {
           $.ct.beginPath();
          d3.area().defined(function(d) {return d})
-              .x(function(d){return $.x(d.date)})
-              .y0(function(d){return y(d[curve.id[0]])})
-              .y1(function(d){return y(d[curve.id[1]])})
+              .x( function(d){ return $.x(d.date); })
+              .y0( function(d){ return y(d[id[0]]); })
+              .y1( function(d){ return y(d[id[1]]); })
               .context($.ct)($.data);
           $.ct.fillStyle = curve.color;
           $.ct.fill();
@@ -274,14 +336,14 @@ function stocks(div, curves) {
         // Draw positive and negative area
 
         else if (curve.type == "area") {
-          for (i = 0; i < 2; i++) {
+          for (var k = 0; k < 2; k++) {
             $.ct.beginPath();
             d3.area().defined(function(d) {return d})
-                .x(function(d){return $.x(d.date)})
-                .y0(function(d){return y(0)})
-                .y1(function(d){return y(Math[i?'min':'max'](0,d[curve.id]))})
+                .x( function(d){ return $.x(d.date); })
+                .y0( function(d){ return y(0); })
+                .y1( function(d){ return y(Math[k?'min':'max'](0,d[id])); })
                 .context($.ct)($.data);
-            $.ct.fillStyle = i?'rgba(178,34,34,.8)':'rgba(0,128,0,.8)';
+            $.ct.fillStyle = k?'rgba(178,34,34,.8)':'rgba(0,128,0,.8)';
             $.ct.fill();
           }
         }
@@ -291,8 +353,8 @@ function stocks(div, curves) {
         else {
           $.ct.beginPath();
           d3.line().defined(function(d) {return d})
-              .x(function(d){return $.x(d.date)})
-              .y(function(d){return y(d[curve.id])})
+              .x( function(d){ return $.x(d.date); })
+              .y( function(d){ return y(d[id]); })
               .context($.ct)($.data);
           $.ct.lineWidth = curve.width;
           $.ct.strokeStyle = curve.color;
@@ -301,8 +363,11 @@ function stocks(div, curves) {
 
       }
 
-    $.ct.translate(0, (box.height||1)*$.height + $.padding + (!!box.axis&&17));
+    // Translation to the next box
 
+    $.ct.translate(0, (box.height||1)*$.height + $.padding
+        + ((!!box.axis || (!!curves[(parseInt(i)+1)+""]
+        && !!curves[(parseInt(i)+1)+""].ratio)) && $.text));
     }
 
   }
@@ -313,7 +378,6 @@ function stocks(div, curves) {
   // ---------------
 
   this.compute_domain = function(keys, type) {
-
     var ext = [],
         Δ = 0.1;
 
@@ -323,7 +387,7 @@ function stocks(div, curves) {
     }
 
     for (var k in keys) {
-      var dom = d3.extent($.data.map(function(d){return d[keys[k]]})),
+      var dom = d3.extent($.data.map( function(d){ return d[keys[k]]})),
           ens = dom;
 
       ens = d3.extent($.data.map(val));
@@ -369,7 +433,7 @@ function stocks(div, curves) {
       .on("mouseout", default_legends)
       .on("mousemove", function () {
           var x0 = $.x.invert(d3.mouse(this)[0]),
-              i = d3.bisector(function(d){return d.date})
+              i = d3.bisector( function(d){ return d.date})
                   .left($.data, x0, 1),
               d0 = $.data[i - 1],
               d1 = (!$.data[i] ? $.data[i- 1] : $.data[i]),

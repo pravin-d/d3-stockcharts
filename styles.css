@@ -18,7 +18,7 @@ body {
 }
 
 
-/* Définitions principales */
+/* Main definitions */
 
 #stocks svg {
   display: block;
@@ -46,16 +46,16 @@ path {
   stroke: #777;
 }
 
+.axis .tick line {
+  stroke-opacity: .5;
+}
 
-/* Sélecteur */
+/* Selector */
 
-.selecteur {
+.select {
   font-size: 0.95em;
   font-weight: normal;
   fill: #BBBBBB;
-}
-
-.selecteur {
   cursor: pointer;
 }
 
@@ -66,42 +66,22 @@ path {
 }
 
 
-/* Légendes */
+/* Legends */
 
-.lgd_date {
-  font-style: italic;
-  fill: #CCCCCC;
-  font-size: 1.1em;
+.legend{
   font-weight: bold;
-}
-
-.lgd_value, .lgd_diff, .lgd_name, .lgd_val {
-  font-weight: bold;
-}
-
-.lgd_diff {
-  fill: #BBBBBB;
-  dominant-baseline: central;
-}
-
-.legend, .lgd_diff, .lgd_triangle, .lgd_ma , .lgd_rs{
   font-size: 0.85em;
-}
-
-.legend {
   fill: #BBBBBB;
 }
 
-.plus {
-  fill: rgba(0, 128, 0, 0.5);
+.date {
+  font-style: italic;
+  font-size: 1.1em;
+  fill: #CCCCCC;
 }
 
-.minus {
-  fill: rgba(178, 34, 34, 0.5);
-}
 
-
-/* Sélecteur de date */
+/* Date selector */
 
 .range {
   font-size: 1.1em;
@@ -118,12 +98,7 @@ path {
 }
 
 
-/* Divers */
-
-.axis .tick line {
-  stroke-opacity: .5;
-}
-
+/* Focus and overlay */
 
 .overlay {
   fill: none;
