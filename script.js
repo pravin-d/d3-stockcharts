@@ -42,6 +42,7 @@ function stocks(div, curves) {
         .append("svg")
         .attr("width", "100%")
         .attr('viewBox','0 0 '+$.svg_width+' '+$.svg_height)
+        .append("g")
         .attr("class", "wrap")
         .attr("transform", "translate("+$.left+","+$.margin+")");
 
@@ -326,7 +327,6 @@ function stocks(div, curves) {
         // Draw area between two variables
 
         if (typeof(id) != "string") {
-          console.log(id[0]);
           $.ct.beginPath();
           d3.area().defined(function(d) {return d})
               .x( function(d){ return $.x(d.date); })
