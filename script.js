@@ -318,6 +318,11 @@ function stocks(div, curves) {
 
       $.axis[i].call(axis.scale(y));
 
+      if ($.type[i] == "relative") {
+        $.axis[i].selectAll(".tick")
+            .classed("tick-one", function(d){ return Math.abs(d-1) < 1e-6});
+      }
+
       // Loop over each curve
 
       for (var j in box.curves) {

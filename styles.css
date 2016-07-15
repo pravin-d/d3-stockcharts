@@ -46,6 +46,10 @@ path {
 }
 
 .axis .tick line {
+  stroke-opacity: .4;
+}
+
+.axis .tick:not(.tick-one) line {
   stroke-opacity: .05;
 }
 
