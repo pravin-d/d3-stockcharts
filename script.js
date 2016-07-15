@@ -18,7 +18,7 @@ function stocks(div, curves) {
     // Box sizing
 
     $.width   = 600;
-    $.height  = 100;
+    $.height  =  75;
     $.margin  =  30;
     $.padding =  20;
     $.left    =  40;
@@ -59,14 +59,13 @@ function stocks(div, curves) {
     cv.width = $.svg_width;
     cv.height = $.svg_height;
 
-    $.d = window.devicePixelRatio || 1;
+    $.d = 2;
     cv.width *= $.d;
     cv.height *= $.d;
     $.cv.style("width", "100%");
     $.cv.style("height", (100 * $.svg_height / $.svg_width) + "%");
 
     $.ct.setTransform($.d, 0, 0, $.d, $.d * $.left, $.d * $.margin);
-
     $.ct.rect(0, 0, $.svg_width - $.left - $.right, $.svg_height);
     $.ct.clip();
 
@@ -89,7 +88,7 @@ function stocks(div, curves) {
 
       $.legends[i] = $.svg.append("text")
         .attr("class", "legend")
-        .attr("transform", "translate(0, " + (y + 15) + ")");
+        .attr("transform", "translate(0, " + (y + 12) + ")");
 
       for (var j in box.curves) {
         var curve = box.curves[j];
@@ -257,18 +256,47 @@ function stocks(div, curves) {
       for (var j in box.curves) {
         var curve = box.curves[j];
 
+        // Draw area between two variables
+
+        if (typeof(curve.id) != "string") {
+          $.ct.beginPath();
+         d3.area().defined(function(d) {return d})
+              .x(function(d){return $.x(d.date)})
+              .y0(function(d){return y(d[curve.id[0]])})
+              .y1(function(d){return y(d[curve.id[1]])})
+              .context($.ct)($.data);
+          $.ct.fillStyle = curve.color;
+          $.ct.fill();
+        }
+
+        // Draw positive and negative area
+
+        else if (curve.type == "area") {
+          for (i = 0; i < 2; i++) {
+            $.ct.beginPath();
+            d3.area().defined(function(d) {return d})
+                .x(function(d){return $.x(d.date)})
+                .y0(function(d){return y(0)})
+                .y1(function(d){return y(Math[i?'min':'max'](0,d[curve.id]))})
+                .context($.ct)($.data);
+            $.ct.fillStyle = i?'rgba(178,34,34,.8)':'rgba(0,128,0,.8)';
+            $.ct.fill();
+          }
+        }
+
         // Draw curve
 
-        $[curve.id] = d3.line()
-            .x(function(d){ return $.x(d.date) })
-            .y(function(d){ return y(d[curve.id]) })
-            .defined(function(d) { return d; });
+        else {
+          $.ct.beginPath();
+          d3.line().defined(function(d) {return d})
+              .x(function(d){return $.x(d.date)})
+              .y(function(d){return y(d[curve.id])})
+              .context($.ct)($.data);
+          $.ct.lineWidth = curve.width;
+          $.ct.strokeStyle = curve.color;
+          $.ct.stroke();
+        }
 
-        $.ct.beginPath();
-        $[curve.id].context($.ct)($.data);
-        $.ct.lineWidth = curve.width;
-        $.ct.strokeStyle = curve.color;
-        $.ct.stroke();
       }
 
     $.ct.translate(0, (box.height||1) * $.height + $.padding);
@@ -296,13 +324,8 @@ function stocks(div, curves) {
       var dom = d3.extent($.data.map(function(d){return d[keys[k]]})),
           ens = dom;
 
-      if (keys[0] != "macd") {
-        ens = d3.extent($.data.map(val));
-
-        if (keys[0].substring(0, 6) != "ratio_") {
-          ens = [(4 * ens[0] + dom[0])/5, (4 * ens[1] + dom[1])/5];
-        }
-      }
+      ens = d3.extent($.data.map(val));
+      ens = [(4 * ens[0] + dom[0])/5, (4 * ens[1] + dom[1])/5];
 
       ext[0] = !!ext[0]?Math.min(ext[0], ens[0]*(1-Δ)) : ens[0]*(1-Δ);
       ext[1] = !!ext[1]?Math.max(ext[1], ens[1]*(1+Δ)) : ens[1]*(1+Δ);

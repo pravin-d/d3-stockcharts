@@ -23,6 +23,7 @@ body {
 #stocks svg {
   display: block;
   position: absolute;
+  margin-left: 2px;
   top: 0;
 }
 
