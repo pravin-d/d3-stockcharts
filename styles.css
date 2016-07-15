@@ -47,7 +47,7 @@ path {
 }
 
 .axis .tick line {
-  stroke-opacity: .5;
+  stroke-opacity: .05;
 }
 
 /* Selector */

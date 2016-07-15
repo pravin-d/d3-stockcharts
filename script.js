@@ -265,7 +265,7 @@ function stocks(div, curves) {
 
     // Show horizontal axis
 
-    var x_axis = d3.axisBottom().scale($.x);
+    var x_axis = d3.axisBottom().tickSizeOuter(0).scale($.x);
     $.svg.selectAll(".x.axis").call(x_axis);
 
     // Loop over each plot
@@ -277,7 +277,8 @@ function stocks(div, curves) {
       var box = curves[i],
           y = d3["scale" + (($.type[i]=="relative") ? "Log" : "Linear")]()
                 .range([(box.height||1)* $.height, 0]),
-          axis = d3.axisLeft().ticks(3.5 * (box.height||1)),
+          axis = d3.axisLeft().ticks(3.5 * (box.height||1))
+                    .tickSizeInner(-$.width).tickSizeOuter(0),
           list = [];
 
       for (var j in box.curves) {
@@ -309,7 +310,9 @@ function stocks(div, curves) {
           axis = d3.axisLeft()
                   .tickFormat(function(x) { return d3.format("+.0%")(x - 1);})
                   .tickValues(d3.scaleLinear().domain(y.domain())
-                      .ticks(3.5 * (box.height||1)));
+                  .ticks(3.5 * (box.height||1)))
+                  .tickSizeInner(-$.width)
+                  .tickSizeOuter(0);
       }
 
       $.axis[i].call(axis.scale(y));
