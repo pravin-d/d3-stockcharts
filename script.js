@@ -20,7 +20,7 @@ function stocks(div, curves) {
     $.width   = 600;
     $.height  =  75;
     $.margin  =  30;
-    $.padding =  20;
+    $.padding =   5;
     $.left    =  40;
     $.right   =  20;
 
@@ -42,11 +42,6 @@ function stocks(div, curves) {
         .attr("class", "wrap")
         .attr("transform", "translate("+$.left+","+$.margin+")");
 
-    $.svg.append("g")
-        .attr("class", "x axis")
-        .attr("transform", "translate(0," +
-          (curves[0].height||1)*$.height + ")");
-
 
     // Canvas initialization
 
@@ -59,7 +54,7 @@ function stocks(div, curves) {
     cv.width = $.svg_width;
     cv.height = $.svg_height;
 
-    $.d = 2;
+    $.d = Math.max(window.devicePixelRatio, 2);
     cv.width *= $.d;
     cv.height *= $.d;
     $.cv.style("width", "100%");
@@ -80,8 +75,13 @@ function stocks(div, curves) {
 
     for (var i in curves) {
       var box = curves[i];
-      y += i==0? 0: (curves[i-1].height || 1) * $.height + $.padding;
 
+      if ( box.axis ) {
+        $.svg.append("g")
+            .attr("class", "x axis")
+            .attr("transform", "translate(0,"+(y+(box.height||1)*$.height)+")");
+      }
+      
       $.axis[i] = $.svg.append("g")
           .attr("class", "axis")
           .attr("transform", "translate(0, " + y + ")");
@@ -104,6 +104,7 @@ function stocks(div, curves) {
             .style("fill", curve.color);
         }
       }
+      y += (box.height||1)*$.height + $.padding + (!!box.axis&&17);
     }
 
     $.date = $.svg.append("g")
@@ -145,7 +146,7 @@ function stocks(div, curves) {
           .attr("class", "range_" + options[i])
           .on("click",function(){$.set_zoom(d3.select(this).text())});
     }
-   }
+  }
 
 
 // Reading data
@@ -232,7 +233,7 @@ function stocks(div, curves) {
     // Show horizontal axis
 
     var x_axis = d3.axisBottom().scale($.x);
-    $.svg.select(".x.axis").call(x_axis);
+    $.svg.selectAll(".x.axis").call(x_axis);
 
     // Loop over each plot
 
@@ -299,7 +300,7 @@ function stocks(div, curves) {
 
       }
 
-    $.ct.translate(0, (box.height||1) * $.height + $.padding);
+    $.ct.translate(0, (box.height||1)*$.height + $.padding + (!!box.axis&&17));
 
     }
 

@@ -16,6 +16,7 @@
 
     var graph = new stocks("#stocks", [
       {
+      	axis: true,
         height: 3.5,
         curves: [
           {id: ["band_lower", "band_upper"], color: "#EAEAEA", width: 1.2},
@@ -48,7 +49,7 @@
 
     d3.csv("data/FR0000045072.csv", graph.read, function(e, data) {
       graph.data = data;
-      graph.set_zoom("1a");
+      graph.set_zoom("2a");
     });
 
   </script>
