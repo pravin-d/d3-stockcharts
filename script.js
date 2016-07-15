@@ -310,7 +310,7 @@ function stocks(div, curves) {
           axis = d3.axisLeft()
                   .tickFormat(function(x) { return d3.format("+.0%")(x - 1);})
                   .tickValues(d3.scaleLinear().domain(y.domain())
-                  .ticks(3.5 * (box.height||1)))
+                  .ticks(2.5 * (box.height||1)))
                   .tickSizeInner(-$.width)
                   .tickSizeOuter(0);
       }
@@ -321,16 +321,17 @@ function stocks(div, curves) {
 
       for (var j in box.curves) {
         var curve = box.curves[j],
-            id = pre + curve.id;
+            id = curve.id;
 
         // Draw area between two variables
 
         if (typeof(id) != "string") {
+          console.log(id[0]);
           $.ct.beginPath();
-         d3.area().defined(function(d) {return d})
+          d3.area().defined(function(d) {return d})
               .x( function(d){ return $.x(d.date); })
-              .y0( function(d){ return y(d[id[0]]); })
-              .y1( function(d){ return y(d[id[1]]); })
+              .y0( function(d){ return y(d[pre+id[0]]); })
+              .y1( function(d){ return y(d[pre+id[1]]); })
               .context($.ct)($.data);
           $.ct.fillStyle = curve.color;
           $.ct.fill();
@@ -344,7 +345,7 @@ function stocks(div, curves) {
             d3.area().defined(function(d) {return d})
                 .x( function(d){ return $.x(d.date); })
                 .y0( function(d){ return y(0); })
-                .y1( function(d){ return y(Math[k?'min':'max'](0,d[id])); })
+                .y1( function(d){ return y(Math[k?'min':'max'](0,d[pre+id])); })
                 .context($.ct)($.data);
             $.ct.fillStyle = k?'rgba(178,34,34,.8)':'rgba(0,128,0,.8)';
             $.ct.fill();
@@ -357,7 +358,7 @@ function stocks(div, curves) {
           $.ct.beginPath();
           d3.line().defined(function(d) {return d})
               .x( function(d){ return $.x(d.date); })
-              .y( function(d){ return y(d[id]); })
+              .y( function(d){ return y(d[pre+id]); })
               .context($.ct)($.data);
           $.ct.lineWidth = curve.width;
           $.ct.strokeStyle = curve.color;
