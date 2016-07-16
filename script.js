@@ -130,7 +130,7 @@ function stocks(div, curves) {
           $.legend[curve.id] = $.legend[curve.id] || [];
           $.legend[curve.id].push($.legends[i].append("tspan")
             .attr("class", "lgd_val lgd_" + curve.id)
-            .style("fill", curve.color));
+            .attr("fill", !(curve.type=="area")?curve.color:null));
         }
       }
 
@@ -432,6 +432,10 @@ function stocks(div, curves) {
       for (var i in $.legend) {
         for (var j in $.legend[i]) {
           $.legend[i][j].text(d3.format($.format[i])(d[i]));
+          if (!$.legend[i][j].attr("fill")) {
+            $.legend[i][j].style("fill",
+              d[i]<0 ? 'rgba(178,34,34,.4)':'rgba(0,128,0,.4)');
+          }
         }
       }
     }
