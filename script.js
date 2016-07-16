@@ -25,6 +25,11 @@ function stocks(div, curves) {
     $.right   =  20;
     $.text    =  20;
 
+    // Colors
+
+    $.min = "rgba(178,34,34,.8)";
+    $.pos = "rgba(0,128,0,.8)";
+
 
     // SVG initialization
 
@@ -129,7 +134,7 @@ function stocks(div, curves) {
           $.format[curve.id] = curve.format || ".1f";
           $.legend[curve.id] = $.legend[curve.id] || [];
           $.legend[curve.id].push($.legends[i].append("tspan")
-            .attr("class", "lgd_val lgd_" + curve.id + " lg_" + curve.type)
+            .attr("class", "lgd_val lgd_" + curve.id + " " + curve.type)
             .attr("fill", curve.color));
 
           if ( curve.diff ) {
@@ -359,7 +364,7 @@ function stocks(div, curves) {
                 .y0( function(d){ return y(0); })
                 .y1( function(d){ return y(Math[k?'min':'max'](0,d[pre+id])); })
                 .context($.ct)($.data);
-            $.ct.fillStyle = k?'rgba(178,34,34,.8)':'rgba(0,128,0,.8)';
+            $.ct.fillStyle = k?$.min:$.pos;
             $.ct.fill();
           }
         }
@@ -446,8 +451,8 @@ function stocks(div, curves) {
 
           // Color area legends
 
-          if (!span.attr("fill")) {
-            span.style("fill", d[i]<0?'rgba(178,34,34,.4)':'rgba(0,128,0,.4)');
+          if (span.classed("area")) {
+            span.style("fill", d[i]<0?$.min:$.pos);
           }
 
           // Show diffs
@@ -459,9 +464,9 @@ function stocks(div, curves) {
             var evol = !!y ? (d[i] - y[i]) / y[i] : 0,
                 evols = evol > 0 ? '▲ ' : (evol < 0 ? '▼ ': '');
             tri.text("  " + evols)
-                .style("fill", evol<0 ? 'rgba(178,34,34,.8)' : 'rgba(0,128,0,.8)')
+                .style("fill", evol<0 ? $.min : $.pos)
             diff.text(d3.format("+.2%")(evol))
-                .style("fill", evol<0 ? 'rgba(178,34,34,.8)' : 'rgba(0,128,0,.8)')
+                .style("fill", evol<0 ? $.min : $.pos)
 
           }
         }
