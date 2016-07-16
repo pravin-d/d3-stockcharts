@@ -129,8 +129,15 @@ function stocks(div, curves) {
           $.format[curve.id] = curve.format || ".1f";
           $.legend[curve.id] = $.legend[curve.id] || [];
           $.legend[curve.id].push($.legends[i].append("tspan")
-            .attr("class", "lgd_val lgd_" + curve.id)
-            .attr("fill", !(curve.type=="area")?curve.color:null));
+            .attr("class", "lgd_val lgd_" + curve.id + " lg_" + curve.type)
+            .attr("fill", curve.color));
+
+          if ( curve.diff ) {
+            $.legends[i]
+              .insert("tspan",".lgd_"+curve.id+"+*").attr("class", "diff")
+            $.legends[i]
+              .insert("tspan",".lgd_"+curve.id+"+*").attr("class", "tri")
+          }
         }
       }
 
@@ -431,10 +438,31 @@ function stocks(div, curves) {
       $.date.text(d3.timeFormat('%A %e %B %Y')(d.date));
       for (var i in $.legend) {
         for (var j in $.legend[i]) {
-          $.legend[i][j].text(d3.format($.format[i])(d[i]));
-          if (!$.legend[i][j].attr("fill")) {
-            $.legend[i][j].style("fill",
-              d[i]<0 ? 'rgba(178,34,34,.4)':'rgba(0,128,0,.4)');
+
+          // Update values
+
+          var span = $.legend[i][j];
+          span.text(d3.format($.format[i])(d[i]));
+
+          // Color area legends
+
+          if (!span.attr("fill")) {
+            span.style("fill", d[i]<0?'rgba(178,34,34,.4)':'rgba(0,128,0,.4)');
+          }
+
+          // Show diffs
+
+          var tri = d3.select(".lgd_"+i+" + .tri"),
+              diff = d3.select(".lgd_"+i+" + .tri + .diff");
+
+          if ( diff.node() ) {
+            var evol = !!y ? (d[i] - y[i]) / y[i] : 0,
+                evols = evol > 0 ? '▲ ' : (evol < 0 ? '▼ ': '');
+            tri.text("  " + evols)
+                .style("fill", evol<0 ? 'rgba(178,34,34,.8)' : 'rgba(0,128,0,.8)')
+            diff.text(d3.format("+.2%")(evol))
+                .style("fill", evol<0 ? 'rgba(178,34,34,.8)' : 'rgba(0,128,0,.8)')
+
           }
         }
       }

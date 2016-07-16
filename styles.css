@@ -68,6 +68,14 @@ path {
   fill: #111111;
 }
 
+.diff, .tri {
+  fill-opacity: 0.7;
+}
+
+.tri {
+  font-family: Arial;
+}
+
 
 /* Legends */
 
@@ -112,6 +120,4 @@ path {
   stroke: black;
   stroke-opacity: 0.2;
 }
-
-
 
