@@ -437,15 +437,16 @@ function stocks(div, curves) {
     }
 
     function detect_pointer() {
-      !!(d3.event.type=="mouseover") && $.focus.style("display", null);
-      var x0 = $.x.invert(d3.mouse(this)[0]),
+      d3.event.type=="mouseover" && $.focus.style("display", null);
+      var cursor = d3.mouse(this)[0];
+      $.focus.attr("transform", "translate("+cursor+",0)");
+      var x0 = $.x.invert(cursor),
           i = d3.bisector( function(d){ return d.date})
               .left($.data, x0, 1),
           d0 = $.data[i - 1],
           d1 = (!$.data[i] ? $.data[i- 1] : $.data[i]),
           test = (x0 - d0.date > d1.date - x0),
           d = test ? d1 : d0;
-      $.focus.attr("transform", "translate("+$.x(d.date)+",0)");
       update_legends(d, test ? d0 : $.data[i-2]);
     }
 
