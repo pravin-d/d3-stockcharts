@@ -1,6 +1,6 @@
 #D3-stockcharts
 
-This script aims to provide simple, lightweight, modulable and responsive **financial charts**. It allows to draw curves, areas or bands, on one or several charts, to show custom time intervals, and show values on mouse over.
+This script aims to provide simple, lightweight, modulable and responsive **financial charts**. It allows to draw curves, areas or bands, on one or several charts, to show custom time intervals, and show values on over. [See the demo](https://www.sylvaindurand.org/d3-stockcharts/).
 
 <a href="https://www.sylvaindurand.org/d3-stockcharts/"><img src="preview.png" width="670" height="570" /></a>
 
