@@ -6,7 +6,7 @@
 "use strict";
 
 
-function stocks(div, options, time, data) {
+function stockchart(data, time, div, param) {
 
 
 // Plot initialization
@@ -35,10 +35,10 @@ function stocks(div, options, time, data) {
     $.svg_width = $.width + $.left + $.right;
     $.svg_height = 1.5*$.margin;
 
-    for (var i = 0; i < options.length; i++) {
-      $.svg_height += (options[i].height||$.height) + $.padding +
-                      $.text * (!!options[i].x_axis ||
-                      (!!options[i+1] &&! !options[i+1].ratio));
+    for (var i = 0; i < param.length; i++) {
+      $.svg_height += (param[i].height||$.height) + $.padding +
+                      $.text * (!!param[i].x_axis ||
+                      (!!param[i+1] &&! !param[i+1].ratio));
     }
 
     $.svg = d3.select(div)
@@ -79,8 +79,8 @@ function stocks(div, options, time, data) {
     $.legend = [];
     $.legends = [];
 
-    for (var i in options) {
-      var box = options[i];
+    for (var i in param) {
+      var box = param[i];
 
       // Horizontal axis
 
@@ -145,8 +145,8 @@ function stocks(div, options, time, data) {
       // Translation to the next box
 
       y += (box.height||$.height) + $.padding
-        + ((!!box.axis || (!!options[(parseInt(i)+1)+""]
-          && !!options[(parseInt(i)+1)+""].ratio)) && $.text);
+        + ((!!box.x_axis || (!!param[(parseInt(i)+1)+""]
+          && !!param[(parseInt(i)+1)+""].ratio)) && $.text);
 
     }
 
@@ -340,11 +340,11 @@ function stocks(div, options, time, data) {
 
     // Loop over each plot
 
-    for (var i in options) {
+    for (var i in param) {
 
       // Compute and show vertical axis
 
-      var box = options[i],
+      var box = param[i],
           y = d3["scale" + (($.type[i]=="relative") ? "Log" : "Linear")]()
                 .range([(box.height||$.height), 0]),
           axis = d3.axisLeft().ticks(3.5 * (box.height||$.height)/$.height)
@@ -374,7 +374,7 @@ function stocks(div, options, time, data) {
         list.push(pre + box.curves[j].id);
       }
 
-      y.domain($.compute_domain(list, (box.type == "sym")));
+      y.domain($.compute_domain(list, (box.y_axis == "sym")));
 
       if ($.type[i] == "relative") {
           axis = d3.axisLeft()
@@ -444,8 +444,8 @@ function stocks(div, options, time, data) {
     // Translation to the next box
 
     $.ct.translate(0, (box.height||$.height) + $.padding
-        + ((!!box.x_axis || (!!options[(parseInt(i)+1)+""]
-        && !!options[(parseInt(i)+1)+""].ratio)) && $.text));
+        + ((!!box.x_axis || (!!param[(parseInt(i)+1)+""]
+        && !!param[(parseInt(i)+1)+""].ratio)) && $.text));
     }
 
   }
