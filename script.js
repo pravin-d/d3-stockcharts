@@ -16,7 +16,7 @@ function stockchart(data, time, div, param) {
 
     // Box sizing
 
-    $.width   = 950;
+    $.width   = 800;
     $.height  =  75;
     $.margin  =  30;
     $.padding =   8;
