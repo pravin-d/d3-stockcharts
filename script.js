@@ -204,9 +204,6 @@ function stockchart(data, time, div, param) {
       d.date = d3.timeParse("%Y-%m-%d")(d.date);
       for (var stat in d) {
         if (stat != 'date') {
-          if (d[stat] == "") {
-            return null;
-          }
           d[stat] = +d[stat];
         }
       }
@@ -402,7 +399,7 @@ function stockchart(data, time, div, param) {
 
         if (typeof(id) != "string") {
           $.ct.beginPath();
-          d3.area().defined(function(d) {return d})
+          d3.area().defined(function(d) {return d[pre+id[0]] && d[pre+id[1]] })
               .x( function(d){ return $.x(d.date); })
               .y0( function(d){ return y(d[pre+id[0]]); })
               .y1( function(d){ return y(d[pre+id[1]]); })
@@ -416,7 +413,7 @@ function stockchart(data, time, div, param) {
         else if (curve.type == "area") {
           for (var k = 0; k < 2; k++) {
             $.ct.beginPath();
-            d3.area().defined(function(d) {return d})
+            d3.area().defined(function(d) {return d[pre+id]})
                 .x( function(d){ return $.x(d.date); })
                 .y0( function(d){ return y(0); })
                 .y1( function(d){ return y(Math[k?'min':'max'](0,d[pre+id])); })
@@ -430,7 +427,7 @@ function stockchart(data, time, div, param) {
 
         else {
           $.ct.beginPath();
-          d3.line().defined(function(d) {return d})
+          d3.line().defined(function(d) {return d[pre+id]})
               .x( function(d){ return $.x(d.date); })
               .y( function(d){ return y(d[pre+id]); })
               .context($.ct)($.data);
