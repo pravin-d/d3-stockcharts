@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Stocks</title>
+  <title>D3-stockcharts</title>
   <link href="styles.css" rel="stylesheet" />
   <script src="https://d3js.org/d3.v4.min.js"></script>
   <script src="script.js"></script>
@@ -10,12 +10,12 @@
 
 <body>
 
-  <div id="stocks"></div>
+  <div id="stockchart"></div>
 
   <script>
 
     d3.csv("data/FR0000045072.csv", function(e, data) {
-      new stockchart(data, "2y", "#stocks", [
+      new stockchart(data, "2y", "#stockchart", [
         {
           height: 250,
           x_axis: true,

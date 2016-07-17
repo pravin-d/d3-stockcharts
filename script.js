@@ -1,5 +1,5 @@
 /*
-  D3 Stock Chart
+  D3-stockcharts
   Sylvain Durand – MIT license
 */
 

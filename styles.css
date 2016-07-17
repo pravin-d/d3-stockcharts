@@ -5,7 +5,7 @@ body {
   margin: 1em auto 1em;
 }
 
-#stocks {
+#stockchart {
   position: relative;
   border: 30px #f3f3f3 solid;
   font-size: 0.75em;
@@ -20,7 +20,7 @@ body {
 
 /* Main definitions */
 
-#stocks svg {
+#stockchart svg {
   display: block;
   position: absolute;
   top: 0;
