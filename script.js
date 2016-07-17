@@ -6,14 +6,13 @@
 "use strict";
 
 
-function stocks(div, curves) {
+function stocks(div, options, time, data) {
 
 
 // Plot initialization
 // -------------------
 
-  this.init = function(isin) {
-
+  this.init = function() {
 
     // Box sizing
 
@@ -33,14 +32,13 @@ function stocks(div, curves) {
 
     // SVG initialization
 
-
     $.svg_width = $.width + $.left + $.right;
     $.svg_height = 1.5*$.margin;
 
-    for (var i = 0; i < curves.length; i++) {
-      $.svg_height += (curves[i].height||1) * $.height + $.padding +
-                      $.text * (!!curves[i].axis ||
-                      (!!curves[i+1] &&! !curves[i+1].ratio));
+    for (var i = 0; i < options.length; i++) {
+      $.svg_height += (options[i].height||$.height) + $.padding +
+                      $.text * (!!options[i].x_axis ||
+                      (!!options[i+1] &&! !options[i+1].ratio));
     }
 
     $.svg = d3.select(div)
@@ -50,7 +48,6 @@ function stocks(div, curves) {
         .append("g")
         .attr("class", "wrap")
         .attr("transform", "translate("+$.left+","+$.margin+")");
-
 
     // Canvas initialization
 
@@ -73,7 +70,6 @@ function stocks(div, curves) {
     $.ct.rect(0, 0, $.svg_width - $.left - $.right, $.svg_height);
     $.ct.clip();
 
-
     // Create axis and legends
 
     var y = 0;
@@ -83,15 +79,15 @@ function stocks(div, curves) {
     $.legend = [];
     $.legends = [];
 
-    for (var i in curves) {
-      var box = curves[i];
+    for (var i in options) {
+      var box = options[i];
 
       // Horizontal axis
 
-      if ( box.axis ) {
+      if ( box.x_axis ) {
         $.svg.append("g")
             .attr("class", "x axis")
-            .attr("transform","translate(0,"+(y+(box.height||1)*$.height)+")");
+            .attr("transform","translate(0,"+(y+(box.height||$.height))+")");
       }
 
       $.axis[i] = $.svg.append("g")
@@ -148,9 +144,9 @@ function stocks(div, curves) {
 
       // Translation to the next box
 
-      y += (box.height||1)*$.height + $.padding
-        + ((!!box.axis || (!!curves[(parseInt(i)+1)+""]
-          && !!curves[(parseInt(i)+1)+""].ratio)) && $.text);
+      y += (box.height||$.height) + $.padding
+        + ((!!box.axis || (!!options[(parseInt(i)+1)+""]
+          && !!options[(parseInt(i)+1)+""].ratio)) && $.text);
 
     }
 
@@ -162,7 +158,6 @@ function stocks(div, curves) {
         .attr("y",10)
         .attr("text-anchor", "end");
 
-
     // Show focus bar
 
     $.focus = $.svg.append("g")
@@ -170,63 +165,67 @@ function stocks(div, curves) {
         .append("line")
         .style("display", "none")
         .attr("y1", 0)
-        .attr("y2", $.svg_height - $.height + $.margin);
+        .attr("y2", $.svg_height);
 
     $.svg.append("rect")
         .attr("class", "overlay")
         .attr("width", $.width)
-        .attr("height", $.svg_height - $.height + $.margin);
-
+        .attr("height", $.svg_height);
 
     // Time intervals selector
 
-    var options = ["max", "10a", "5a", "2a", "1a", "6m"],
+    var times = ["max", "10a", "5a", "2a", "1a", "6m"],
         range = $.svg.append("text")
             .attr("x", $.width)
             .attr("y", - $.margin / 4)
             .attr("text-anchor", "end")
             .attr("class", "range");
 
-    for (var i in options) {
+    for (var i in times) {
       range.append("tspan").text("  ");
-      range.append("tspan").text(options[i])
-          .attr("class", "range_" + options[i])
-          .on("click",function(){$.set_zoom(d3.select(this).text()); });
+      range.append("tspan").text(times[i])
+          .attr("class", "range_" + times[i])
+          .on("click",function(){$.show(d3.select(this).text()); });
     }
+
+    // Draw
+
+    $.load(data);
+
   }
 
 
-// Reading data
-// ------------
+// Read and show data
+// ------------------
 
-  this.read = function(d) {
+  this.load = function(data) {
 
-    d.date = d3.timeParse("%Y-%m-%d")(d.date);
-    for (var stat in d) {
-      if (stat != 'date') {
-        if (d[stat] == "") {
-          return null;
+    data.forEach(function(d) {
+      d.date = d3.timeParse("%Y-%m-%d")(d.date);
+      for (var stat in d) {
+        if (stat != 'date') {
+          if (d[stat] == "") {
+            return null;
+          }
+          d[stat] = +d[stat];
         }
-        d[stat] = +d[stat];
       }
-    }
-    return d;
-
+    })
+    $.data = data;
+    $.show(time);
   };
 
 
+// Show the graph
+// --------------
 
-// Set time interval
-// -----------------
-
-  this.set_zoom = function(time) {
+  this.show = function(t) {
 
     // Read requested time interval
 
     var today = new Date($.data[$.data.length - 1].date),
         start = new Date($.data[$.data.length - 1].date),
-        arg = /(\d+)(.)/.exec(time);
-
+        arg = /(\d+)(.)/.exec(t);
 
     // Compute time interval
 
@@ -245,12 +244,10 @@ function stocks(div, curves) {
       $.ext = d3.extent($.data.map(function(d){ return d.date }));
     }
 
-
     // Show selected time interval
 
     d3.selectAll(".range tspan").classed("active", 0);
-    d3.select(".range_" + time).classed("active", 1);
-
+    d3.select(".range_" + t).classed("active", 1);
 
     // Update axis
 
@@ -259,11 +256,71 @@ function stocks(div, curves) {
 
     // Draw
 
-    $.show_legends();
     $.draw();
 
-  };
+    // Show legends
 
+    function default_legends() {
+      $.focus.style("display", "none");
+      update_legends($.data.slice(-1)[0], $.data.slice(-2)[0]);
+    }
+
+    function update_legends(d, y) {
+      $.date.text(d3.timeFormat('%A %e %B %Y')(d.date));
+      for (var i in $.legend) {
+        for (var j in $.legend[i]) {
+
+          // Update values
+
+          var span = $.legend[i][j];
+          span.text(d3.format($.format[i])(d[i]));
+
+          // Color area legends
+
+          if (span.classed("area")) {
+            span.style("fill", d[i]<0?$.min:$.pos);
+          }
+
+          // Show diffs
+
+          var tri = d3.select(".lgd_"+i+" + .tri"),
+              diff = d3.select(".lgd_"+i+" + .tri + .diff");
+
+          if ( diff.node() ) {
+            var evol = !!y ? (d[i] - y[i]) / y[i] : 0,
+                evols = evol > 0 ? '▲ ' : (evol < 0 ? '▼ ': '');
+            tri.text("  " + evols)
+                .style("fill", evol<0 ? $.min : $.pos)
+            diff.text(d3.format("+.2%")(evol))
+                .style("fill", evol<0 ? $.min : $.pos)
+
+          }
+        }
+      }
+    }
+
+    function detect_pointer() {
+      d3.event.type=="mouseover" && $.focus.style("display", null);
+      var cursor = d3.mouse(this)[0];
+      $.focus.attr("transform", "translate("+cursor+",0)");
+      var x0 = $.x.invert(cursor),
+          i = d3.bisector( function(d){ return d.date})
+              .left($.data, x0, 1),
+          d0 = $.data[i - 1],
+          d1 = (!$.data[i] ? $.data[i- 1] : $.data[i]),
+          test = (x0 - d0.date > d1.date - x0),
+          d = test ? d1 : d0;
+      update_legends(d, test ? d0 : $.data[i-2]);
+    }
+
+    default_legends();
+
+    d3.selectAll(".overlay")
+      .on("mouseout", default_legends)
+      .on("mousemove", detect_pointer)
+      .on("mouseover", detect_pointer);
+
+  };
 
 
 // Drawing curves
@@ -283,14 +340,14 @@ function stocks(div, curves) {
 
     // Loop over each plot
 
-    for (var i in curves) {
+    for (var i in options) {
 
       // Compute and show vertical axis
 
-      var box = curves[i],
+      var box = options[i],
           y = d3["scale" + (($.type[i]=="relative") ? "Log" : "Linear")]()
-                .range([(box.height||1)* $.height, 0]),
-          axis = d3.axisLeft().ticks(3.5 * (box.height||1))
+                .range([(box.height||$.height), 0]),
+          axis = d3.axisLeft().ticks(3.5 * (box.height||$.height)/$.height)
                     .tickSizeInner(-$.width).tickSizeOuter(0),
           list = [];
 
@@ -386,9 +443,9 @@ function stocks(div, curves) {
 
     // Translation to the next box
 
-    $.ct.translate(0, (box.height||1)*$.height + $.padding
-        + ((!!box.axis || (!!curves[(parseInt(i)+1)+""]
-        && !!curves[(parseInt(i)+1)+""].ratio)) && $.text));
+    $.ct.translate(0, (box.height||$.height) + $.padding
+        + ((!!box.x_axis || (!!options[(parseInt(i)+1)+""]
+        && !!options[(parseInt(i)+1)+""].ratio)) && $.text));
     }
 
   }
@@ -427,76 +484,8 @@ function stocks(div, curves) {
     }
   };
 
-
-
-// Show and update legends
-// -----------------------
-
-  this.show_legends = function() {
-
-    function default_legends() {
-        $.focus.style("display", "none");
-        update_legends($.data.slice(-1)[0], $.data.slice(-2)[0]);
-    }
-
-    function update_legends(d, y) {
-      $.date.text(d3.timeFormat('%A %e %B %Y')(d.date));
-      for (var i in $.legend) {
-        for (var j in $.legend[i]) {
-
-          // Update values
-
-          var span = $.legend[i][j];
-          span.text(d3.format($.format[i])(d[i]));
-
-          // Color area legends
-
-          if (span.classed("area")) {
-            span.style("fill", d[i]<0?$.min:$.pos);
-          }
-
-          // Show diffs
-
-          var tri = d3.select(".lgd_"+i+" + .tri"),
-              diff = d3.select(".lgd_"+i+" + .tri + .diff");
-
-          if ( diff.node() ) {
-            var evol = !!y ? (d[i] - y[i]) / y[i] : 0,
-                evols = evol > 0 ? '▲ ' : (evol < 0 ? '▼ ': '');
-            tri.text("  " + evols)
-                .style("fill", evol<0 ? $.min : $.pos)
-            diff.text(d3.format("+.2%")(evol))
-                .style("fill", evol<0 ? $.min : $.pos)
-
-          }
-        }
-      }
-    }
-
-    function detect_pointer() {
-      d3.event.type=="mouseover" && $.focus.style("display", null);
-      var cursor = d3.mouse(this)[0];
-      $.focus.attr("transform", "translate("+cursor+",0)");
-      var x0 = $.x.invert(cursor),
-          i = d3.bisector( function(d){ return d.date})
-              .left($.data, x0, 1),
-          d0 = $.data[i - 1],
-          d1 = (!$.data[i] ? $.data[i- 1] : $.data[i]),
-          test = (x0 - d0.date > d1.date - x0),
-          d = test ? d1 : d0;
-      update_legends(d, test ? d0 : $.data[i-2]);
-    }
-
-    default_legends();
-
-    d3.selectAll(".overlay")
-      .on("mouseout", default_legends)
-      .on("mousemove", detect_pointer)
-      .on("mouseover", detect_pointer);
-
-  };
-
   var $ = this;
   $.init();
 
 }
+
