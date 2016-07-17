@@ -380,7 +380,7 @@ function stockchart(data, time, div, param) {
           axis = d3.axisLeft()
                   .tickFormat(function(x) { return d3.format("+.0%")(x - 1);})
                   .tickValues(d3.scaleLinear().domain(y.domain())
-                  .ticks(2.5 * (box.height||1)))
+                  .ticks(2.5 * (box.height||$.height)/$.height))
                   .tickSizeInner(-$.width)
                   .tickSizeOuter(0);
       }
