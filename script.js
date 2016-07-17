@@ -100,7 +100,7 @@ function stockchart(data, time, div, param) {
         var select = $.svg.append("text")
             .attr("id", "select" + i)
             .attr("class", "select absolute")
-            .attr("transform", "translate(0, " + (y-4) + ")")
+            .attr("transform", "translate(0, " + (y-8) + ")")
             .attr("text-anchor", "end")
             .on("click", function() {
               var k = d3.select(this).attr("id").slice(6);
