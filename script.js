@@ -174,7 +174,7 @@ function stockchart(data, time, div, param) {
 
     // Time intervals selector
 
-    var times = ["max", "10a", "5a", "2a", "1a", "6m"],
+    var times = ["max", "10y", "5y", "2y", "1y", "6m"],
         range = $.svg.append("text")
             .attr("x", $.width)
             .attr("y", - $.margin / 4)

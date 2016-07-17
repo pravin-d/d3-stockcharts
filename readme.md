@@ -2,7 +2,7 @@
 
 This script aims to provide simple, lightweight, modulable and responsive **financial charts**. It allows to draw curves, areas or bands, on one or several charts, to show custom time intervals, and show values on mouse over.
 
-<a href="https://www.sylvaindurand.org"><img src="preview.png" width="680" height="600" /></a>
+<a href="https://www.sylvaindurand.org"><img src="preview.png" width="670" height="570" /></a>
 
 ## Usage
 
