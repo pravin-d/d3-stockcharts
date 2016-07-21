@@ -327,8 +327,8 @@ function stockchart(data, time, div, param) {
 
     // Reset canvas
 
-    $.ct.clearRect(-1000, -1000, 10000, 10000);
     $.ct.setTransform($.d, 0, 0, $.d, $.d * $.left, $.d * $.margin);
+    $.ct.clearRect(0, 0, $.svg_width, $.svg_height);
 
     // Show horizontal axis
 
