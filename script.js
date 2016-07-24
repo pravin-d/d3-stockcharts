@@ -357,14 +357,16 @@ function stockchart(data, time, div, param) {
         if ($.type[i] == "relative") {
           pre = "ratio_";
 
-          var id = box.curves[j].id,
+          var base, id = box.curves[j].id,
               name = (typeof(id) == "string")? [id] : id,
               start = d3.min($.data.map(function(d)
-                              {if (d.date >= $.ext[0]) return d.date})),
-              base = $.data.find(function (d)
-                              {return d.date == start; })[box.ratio];
+                              {if (d.date >= $.ext[0]) return d.date}));
 
           for (var id in name) {
+            base = $.data.find(function (d)
+                              {return d.date == start; })
+                              [(box.ratio === true) ? name[id] : box.ratio];
+
             $.data.forEach(function(d){d[pre+name[id]] = d[name[id]]/base});
           }
         }

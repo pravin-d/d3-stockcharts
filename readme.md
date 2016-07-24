@@ -73,7 +73,7 @@ The *parameters* argument provides a list of charts (defined as objects), which 
 
 <a href="#height" name="height">#</a> <b>height</b>: defines the height of the current chart, which defaults to 60.
 
-<a href="#ratio" name="ratio">#</a> <b>ratio</b>: gives the ability to show relative values, based on the data selected the specified `id`.
+<a href="#ratio" name="ratio">#</a> <b>ratio</b>: gives the ability to show relative values, based on the data selected the specified `id`; if simply set to `true`, show relative values based on each variable.
 
 <a href="#x_axis" name="x_axis">#</a> <b>x_axis</b>: if true, draw an horizontal axis under the given chart.
 
